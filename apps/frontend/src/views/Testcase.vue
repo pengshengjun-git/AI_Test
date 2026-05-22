@@ -150,28 +150,28 @@
             <el-option label="UI测试" value="UI" />
           </el-select>
         </el-form-item>
-        <el-form-item label="测试状态" prop="test_status" required>
-          <el-select v-model="testcaseForm.test_status" placeholder="请选择测试状态">
+        <el-form-item label="测试状态" prop="testStatus" required>
+          <el-select v-model="testcaseForm.testStatus" placeholder="请选择测试状态">
             <el-option label="待测试" value="待测试" />
             <el-option label="测试通过" value="测试通过" />
             <el-option label="测试失败" value="测试失败" />
           </el-select>
         </el-form-item>
-        <el-form-item label="测试模块" prop="test_module">
-          <InputWithLimit v-model="testcaseForm.test_module" placeholder="请输入测试模块" :maxlength="50" />
+        <el-form-item label="测试模块" prop="testModule">
+          <InputWithLimit v-model="testcaseForm.testModule" placeholder="请输入测试模块" :maxlength="50" />
         </el-form-item>
-        <el-form-item label="关联项目" prop="project_id">
-          <el-select v-model="testcaseForm.project_id" placeholder="请选择关联项目">
+        <el-form-item label="关联项目" prop="projectId">
+          <el-select v-model="testcaseForm.projectId" placeholder="请选择关联项目">
             <el-option v-for="project in projectOptions" :key="project.id" :label="project.name" :value="project.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="关联需求" prop="requirement_id">
-          <el-select v-model="testcaseForm.requirement_id" placeholder="请选择关联需求" clearable>
+        <el-form-item label="关联需求" prop="requirementId">
+          <el-select v-model="testcaseForm.requirementId" placeholder="请选择关联需求" clearable>
             <el-option v-for="req in requirementOptions" :key="req.id" :label="req.name" :value="req.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="前置条件" prop="precondition">
-          <InputWithLimit v-model="testcaseForm.precondition" type="textarea" :rows="2" placeholder="请输入前置条件" :maxlength="500" />
+        <el-form-item label="前置条件" prop="preconditions">
+          <InputWithLimit v-model="testcaseForm.preconditions" type="textarea" :rows="2" placeholder="请输入前置条件" :maxlength="500" />
         </el-form-item>
         <el-form-item label="测试步骤" prop="steps">
           <InputWithLimit v-model="testcaseForm.steps" type="textarea" :rows="4" placeholder="请输入测试步骤" :maxlength="500" />
@@ -247,14 +247,14 @@ const testcaseForm = reactive<Testcase>({
   title: '',
   priority: 'P2',
   type: 'FUNCTIONAL',
-  precondition: '',
+  preconditions: '',
   steps: '',
   expectedResult: '',
   status: 'PENDING_REVIEW',
-  test_status: '待测试',
-  test_module: '',
-  requirement_id: undefined,
-  project_id: 1
+  testStatus: '待测试',
+  testModule: '',
+  requirementId: undefined,
+  projectId: 1
 })
 
 /**
@@ -402,16 +402,20 @@ const showCreateDialog = () => {
  */
 const handleEdit = (row: Testcase) => {
   isEdit.value = true
-  Object.assign(testcaseForm, row)
-  if (row.expectedResult !== undefined && !testcaseForm.expectedResult) {
-    testcaseForm.expectedResult = row.expectedResult
-  }
-  if (row.steps === undefined) {
-    testcaseForm.steps = ''
-  }
-  if (row.precondition === undefined) {
-    testcaseForm.precondition = ''
-  }
+  Object.assign(testcaseForm, {
+    id: row.id,
+    title: row.title,
+    priority: row.priority,
+    type: row.type,
+    preconditions: row.preconditions || '',
+    steps: row.steps || '',
+    expectedResult: row.expectedResult || '',
+    status: row.status,
+    testStatus: row.testStatus || row.test_status || '待测试',
+    testModule: row.testModule || row.test_module || '',
+    requirementId: row.requirementId || row.requirement_id,
+    projectId: row.projectId || row.project_id || 1
+  })
   dialogVisible.value = true
 }
 
@@ -515,10 +519,14 @@ const resetForm = () => {
     title: '',
     priority: 'P2',
     type: 'FUNCTIONAL',
-    precondition: '',
+    preconditions: '',
     steps: '',
     expectedResult: '',
-    status: 'PENDING_REVIEW'
+    status: 'PENDING_REVIEW',
+    testStatus: '待测试',
+    testModule: '',
+    requirementId: undefined,
+    projectId: 1
   })
 }
 

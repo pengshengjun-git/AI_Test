@@ -39,17 +39,6 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         testcase.setUpdateTime(java.time.LocalDateTime.now());
         this.save(testcase);
 
-        // 创建用例步骤
-        if (dto.getSteps() != null && !dto.getSteps().isEmpty()) {
-            for (int i = 0; i < dto.getSteps().size(); i++) {
-                TestcaseStep step = dto.getSteps().get(i);
-                step.setTestcaseId(testcase.getId());
-                step.setStepNumber(i + 1);
-                step.setCreatedAt(java.time.LocalDateTime.now());
-                testcaseStepMapper.insert(step);
-            }
-        }
-
         return testcase;
     }
 
@@ -64,22 +53,6 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         BeanUtils.copyProperties(dto, testcase);
         testcase.setUpdateTime(java.time.LocalDateTime.now());
         this.updateById(testcase);
-
-        // 更新用例步骤：先删除旧步骤，再添加新步骤
-        if (dto.getSteps() != null) {
-            LambdaQueryWrapper<TestcaseStep> deleteWrapper = new LambdaQueryWrapper<>();
-            deleteWrapper.eq(TestcaseStep::getTestcaseId, dto.getId());
-            testcaseStepMapper.delete(deleteWrapper);
-
-            if (!dto.getSteps().isEmpty()) {
-                for (int i = 0; i < dto.getSteps().size(); i++) {
-                    TestcaseStep step = dto.getSteps().get(i);
-                    step.setTestcaseId(dto.getId());
-                    step.setStepNumber(i + 1);
-                    testcaseStepMapper.insert(step);
-                }
-            }
-        }
 
         return testcase;
     }
