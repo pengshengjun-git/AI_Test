@@ -1,0 +1,23 @@
+@echo off
+echo 使用国内镜像源拉取基础镜像...
+
+echo 拉取 MySQL 镜像...
+docker pull mysql:8.0.33
+
+echo 拉取 Redis 镜像...
+docker pull redis:7-alpine
+
+echo 拉取 OpenJDK 镜像...
+docker pull eclipse-temurin:21-jdk-alpine
+docker pull eclipse-temurin:21-jre-alpine
+
+echo 拉取 Node.js 镜像...
+docker pull node:20-alpine
+
+echo 拉取 Nginx 镜像...
+docker pull nginx:alpine
+
+echo 拉取 Python 镜像...
+docker pull python:3.11-slim
+
+echo 所有基础镜像拉取完成！

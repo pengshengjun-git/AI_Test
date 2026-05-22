@@ -1,0 +1,15 @@
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\config\MyMetaObjectHandler.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\dto\ResetPasswordRequest.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\dto\UserVO.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\dto\RegisterRequest.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\result\Result.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\dto\LoginResponse.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\context\UserContext.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\filter\JwtFilter.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\util\Base64Util.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\util\TokenUtil.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\util\JwtUtil.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\entity\BaseEntity.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\dto\LoginRequest.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\exception\BusinessException.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\exception\GlobalExceptionHandler.java

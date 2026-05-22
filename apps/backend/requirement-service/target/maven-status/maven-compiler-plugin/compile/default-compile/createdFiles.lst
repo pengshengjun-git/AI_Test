@@ -1,0 +1,15 @@
+com\aitest\requirement\config\SecurityConfig.class
+com\aitest\requirement\mapper\RequirementTestPointMapper.class
+com\aitest\requirement\entity\RequirementTestPoint.class
+com\aitest\requirement\service\RequirementService.class
+com\aitest\requirement\controller\RequirementController.class
+com\aitest\requirement\RequirementApplication.class
+com\aitest\requirement\dto\RequirementQueryDTO.class
+com\aitest\requirement\mapper\RequirementMapper.class
+com\aitest\requirement\config\MybatisPlusConfig.class
+com\aitest\requirement\service\impl\RequirementServiceImpl.class
+com\aitest\requirement\service\FileStorageService.class
+com\aitest\requirement\dto\RequirementCreateDTO.class
+com\aitest\requirement\service\impl\LocalFileStorageServiceImpl.class
+com\aitest\requirement\dto\RequirementUpdateDTO.class
+com\aitest\requirement\entity\Requirement.class

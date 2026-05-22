@@ -1,0 +1,12 @@
+com\aitest\dashboard\feign\ProjectServiceFeign.class
+com\aitest\dashboard\controller\TestPlanController.class
+com\aitest\dashboard\feign\DefectServiceFeign.class
+com\aitest\dashboard\controller\DashboardController$1.class
+com\aitest\dashboard\feign\RequirementServiceFeign.class
+com\aitest\dashboard\feign\TestcaseServiceFeign.class
+com\aitest\dashboard\controller\DashboardController$3.class
+com\aitest\dashboard\controller\CoverageController.class
+com\aitest\dashboard\controller\DashboardController$2.class
+com\aitest\dashboard\DashboardApplication.class
+com\aitest\dashboard\config\SecurityConfig.class
+com\aitest\dashboard\controller\DashboardController.class

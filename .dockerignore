@@ -1,0 +1,11 @@
+# Docker build context（仓库根）。Java 镜像在容器内 mvn 打包，宿主 target 不必送入上下文。
+.git
+.idea
+.vscode
+**/node_modules
+backend/**/target
+**/.classpath
+**/.project
+**/.settings
+*.md
+.trae

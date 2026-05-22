@@ -1,0 +1,15 @@
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\dto\RequirementCreateDTO.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\service\FileStorageService.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\service\impl\LocalFileStorageServiceImpl.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\entity\Requirement.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\entity\RequirementTestPoint.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\dto\RequirementUpdateDTO.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\service\impl\RequirementServiceImpl.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\dto\RequirementQueryDTO.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\mapper\RequirementTestPointMapper.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\config\MybatisPlusConfig.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\config\SecurityConfig.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\controller\RequirementController.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\RequirementApplication.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\mapper\RequirementMapper.java
+F:\自我文件\AI-Test-Platform\apps\backend\requirement-service\src\main\java\com\aitest\requirement\service\RequirementService.java

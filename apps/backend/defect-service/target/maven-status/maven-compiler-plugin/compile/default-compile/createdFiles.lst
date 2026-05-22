@@ -1,0 +1,9 @@
+com\aitest\defect\config\SecurityConfig.class
+com\aitest\defect\service\DefectService.class
+com\aitest\defect\controller\DefectController.class
+com\aitest\defect\dto\DefectCreateDTO.class
+com\aitest\defect\DefectApplication.class
+com\aitest\defect\entity\Defect.class
+com\aitest\defect\dto\DefectQueryDTO.class
+com\aitest\defect\mapper\DefectMapper.class
+com\aitest\defect\service\impl\DefectServiceImpl.class

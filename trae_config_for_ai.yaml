@@ -1,0 +1,32 @@
+# ⭐ AI授权版配置 - 复制内容替换到 trae_config.yaml
+# 注意：先备份原文件！
+
+permission_mode: default
+
+# 全局工具白名单：AI工程师只准用这些
+allowed_tools:
+- ReadFile
+- WriteFile
+- ListDir
+- TaskDone
+- Bash:
+    allow:
+    - docker compose*
+    - docker*
+    - cd*
+    - dir*
+
+# 文件黑名单：AI工程师绝对不能碰
+blocked_files:
+- AGENTS.md
+# - trae_config.yaml  # 已注释，允许AI修改
+- memory/architecture.md
+- memory/decisions.md
+- .trae/agents/*.md
+- .trae/agents/**/*.md
+
+# ---
+# 说明：
+# 1. 复制本文件内容覆盖原 trae_config.yaml
+# 2. 或者只修改上面两个关键部分
+# 3. 改完后告诉AI"改完了"

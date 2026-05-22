@@ -1,0 +1,289 @@
+services:
+  mysql:
+    image: mysql:8.0.33
+    container_name: dev-mysql
+    restart: always
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ai_test_platform
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --init-connect='SET NAMES utf8mb4'
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ../backend/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ../backend/database/data.sql:/docker-entrypoint-initdb.d/data.sql
+      - ../config/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - ai-test-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: dev-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai-test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: dev-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - ai-test-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  auth-service:
+    build:
+      context: ..
+      dockerfile: services/auth-service/Dockerfile
+    container_name: dev-auth-service
+    restart: always
+    ports:
+      - "9001:8001"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  user-service:
+    build:
+      context: ..
+      dockerfile: services/user-service/Dockerfile
+    container_name: dev-user-service
+    restart: always
+    ports:
+      - "9002:8002"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  project-service:
+    build:
+      context: ..
+      dockerfile: services/project-service/Dockerfile
+    container_name: dev-project-service
+    restart: always
+    ports:
+      - "9003:8003"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  testcase-service:
+    build:
+      context: ..
+      dockerfile: services/testcase-service/Dockerfile
+    container_name: dev-testcase-service
+    restart: always
+    ports:
+      - "9004:8004"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  defect-service:
+    build:
+      context: ..
+      dockerfile: services/defect-service/Dockerfile
+    container_name: dev-defect-service
+    restart: always
+    ports:
+      - "9005:8005"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  requirement-service:
+    build:
+      context: ..
+      dockerfile: services/requirement-service/Dockerfile
+    container_name: dev-requirement-service
+    restart: always
+    ports:
+      - "9006:8006"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+      JAVA_TOOL_OPTIONS: "-Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
+      SERVER_PORT: 8006
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  dashboard-service:
+    build:
+      context: ..
+      dockerfile: services/dashboard-service/Dockerfile
+    container_name: dev-dashboard-service
+    restart: always
+    ports:
+      - "9007:8007"
+    environment:
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+      SERVER_PORT: 8007
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  strategy-service:
+    build:
+      context: ..
+      dockerfile: services/strategy-service/Dockerfile
+    container_name: dev-strategy-service
+    restart: always
+    ports:
+      - "9008:8008"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_unicode_ci
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  ai-service:
+    build:
+      context: ..
+      dockerfile: services/ai-service/Dockerfile
+    container_name: dev-ai-service
+    restart: always
+    ports:
+      - "9010:8010"
+    profiles:
+      - ai
+    networks:
+      - ai-test-network
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: services/frontend/Dockerfile
+    container_name: dev-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-service
+      - user-service
+      - project-service
+      - testcase-service
+      - defect-service
+      - requirement-service
+      - dashboard-service
+      - strategy-service
+    networks:
+      - ai-test-network
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+networks:
+  ai-test-network:
+    driver: bridge
+    name: ai-test-network

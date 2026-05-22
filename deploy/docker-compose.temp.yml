@@ -1,0 +1,255 @@
+# AI测试管理平台 - 临时生产环境配置
+# 使用已有的镜像启动服务
+
+services:
+  ##########################
+  # 基础设施服务
+  ##########################
+
+  mysql:
+    image: mysql:8.0.33
+    container_name: ai-test-mysql
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ai_test_platform
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ../apps/backend/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ../apps/backend/database/data.sql:/docker-entrypoint-initdb.d/data.sql
+    networks:
+      - ai-test-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai-test-redis
+    restart: always
+    ports:
+      - "6378:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai-test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ai-test-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - ai-test-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  ##########################
+  # 微服务
+  ##########################
+
+  auth-service:
+    image: ai-test-auth-service:latest
+    container_name: ai-test-auth-service
+    restart: always
+    ports:
+      - "8001:8001"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  dashboard-service:
+    image: ai-test-dashboard-service:latest
+    container_name: ai-test-dashboard-service
+    restart: always
+    ports:
+      - "8007:8007"
+    environment:
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  defect-service:
+    image: ai-test-defect-service:latest
+    container_name: ai-test-defect-service
+    restart: always
+    ports:
+      - "8005:8005"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  project-service:
+    image: ai-test-project-service:latest
+    container_name: ai-test-project-service
+    restart: always
+    ports:
+      - "8003:8003"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  requirement-service:
+    image: ai-test-requirement-service:latest
+    container_name: ai-test-requirement-service
+    restart: always
+    ports:
+      - "8006:8006"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+      SERVER_PORT: 8006
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  strategy-service:
+    image: ai-test-strategy-service:latest
+    container_name: ai-test-strategy-service
+    restart: always
+    ports:
+      - "8008:8008"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_CLOUD_NACOS_DISCOVERY_ENABLED: "false"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  ai-service:
+    image: ai-test-ai-service:latest
+    container_name: ai-test-ai-service
+    restart: always
+    ports:
+      - "8010:8010"
+    networks:
+      - ai-test-network
+
+  ##########################
+  # Mock服务（可选，用于开发测试）
+  ##########################
+
+  mock-service:
+    image: ai-test-mock-service:latest
+    container_name: ai-test-mock-service
+    restart: unless-stopped
+    ports:
+      - "8020:8020"
+    environment:
+      MOCK_DELAY_MS: ${MOCK_DELAY_MS:-0}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: ai_test_platform
+    profiles:
+      - mock
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - ai-test-network
+
+  ##########################
+  # 前端
+  ##########################
+
+  frontend:
+    image: ai-test-frontend:latest
+    container_name: ai-test-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-service
+      - dashboard-service
+      - defect-service
+      - project-service
+      - requirement-service
+      - strategy-service
+      - ai-service
+    networks:
+      - ai-test-network
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+networks:
+  ai-test-network:
+    driver: bridge
+    name: ai-test-network

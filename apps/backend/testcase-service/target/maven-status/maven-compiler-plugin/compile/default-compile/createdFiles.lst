@@ -1,0 +1,12 @@
+com\aitest\testcase\controller\TestcaseController.class
+com\aitest\testcase\entity\Testcase.class
+com\aitest\testcase\mapper\TestcaseMapper.class
+com\aitest\testcase\service\impl\TestcaseServiceImpl.class
+com\aitest\testcase\entity\TestcaseStep.class
+com\aitest\testcase\TestcaseApplication.class
+com\aitest\testcase\dto\TestcaseCreateDTO.class
+com\aitest\testcase\config\SecurityConfig.class
+com\aitest\testcase\dto\TestcaseUpdateDTO.class
+com\aitest\testcase\mapper\TestcaseStepMapper.class
+com\aitest\testcase\service\TestcaseService.class
+com\aitest\testcase\dto\TestcaseQueryDTO.class
