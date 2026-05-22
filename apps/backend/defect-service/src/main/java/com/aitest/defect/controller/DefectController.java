@@ -55,6 +55,15 @@ public class DefectController {
     }
 
     /**
+     * 获取缺陷统计
+     */
+    @GetMapping("/stats")
+    public Result<Map<String, Object>> getStatistics(@RequestParam(required = false) Long projectId) {
+        Map<String, Object> stats = defectService.getStatistics(projectId);
+        return Result.success(stats);
+    }
+
+    /**
      * 获取缺陷详情
      */
     @GetMapping("/{id}")
@@ -121,8 +130,20 @@ public class DefectController {
      * 分配缺陷
      */
     @PostMapping("/{id}/assign")
-    public Result<Map<String, Object>> assignDefect(@PathVariable Long id, @RequestBody Map<String, Long> body) {
-        Long assignee = body.get("handler");
+    public Result<Map<String, Object>> assignDefect(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        Object handlerObj = body.get("handler");
+        Long assignee = null;
+        if (handlerObj != null) {
+            if (handlerObj instanceof Number) {
+                assignee = ((Number) handlerObj).longValue();
+            } else if (handlerObj instanceof String) {
+                try {
+                    assignee = Long.parseLong((String) handlerObj);
+                } catch (NumberFormatException e) {
+                    // 字符串不能转换为数字时，assignee保持为null
+                }
+            }
+        }
         Defect defect = defectService.assignDefect(id, assignee);
         if (defect == null) {
             return Result.error("缺陷不存在");
@@ -157,14 +178,23 @@ public class DefectController {
         map.put("severity", defect.getSeverity());
         map.put("module", defect.getModule());
         map.put("steps", defect.getStepsToReproduce());
+        map.put("stepsToReproduce", defect.getStepsToReproduce());
         map.put("expectedResult", defect.getExpectedResult());
         map.put("actualResult", defect.getActualResult());
         map.put("requirementId", defect.getRequirementId());
+        map.put("requirement_id", defect.getRequirementId());
         map.put("projectId", defect.getProjectId());
+        map.put("project_id", defect.getProjectId());
         map.put("assignee", defect.getAssignee());
+        map.put("assignee_id", defect.getAssignee());
+        map.put("reporterId", defect.getReporterId());
+        map.put("reporter_id", defect.getReporterId());
         map.put("createdBy", defect.getCreatedBy());
-        map.put("createdAt", defect.getCreateTime());
+        map.put("created_at", defect.getCreateTime());
+        map.put("createTime", defect.getCreateTime());
         map.put("updatedAt", defect.getUpdateTime());
+        map.put("updated_at", defect.getUpdateTime());
+        map.put("updateTime", defect.getUpdateTime());
         return map;
     }
 }

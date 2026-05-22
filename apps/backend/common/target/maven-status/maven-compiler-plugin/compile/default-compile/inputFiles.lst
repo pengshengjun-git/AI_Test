@@ -6,7 +6,10 @@ F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\co
 F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\dto\LoginResponse.java
 F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\context\UserContext.java
 F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\filter\JwtFilter.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\annotation\RequirePermission.java
 F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\util\Base64Util.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\util\PermissionContext.java
+F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\interceptor\PermissionInterceptor.java
 F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\util\TokenUtil.java
 F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\util\JwtUtil.java
 F:\自我文件\AI-Test-Platform\apps\backend\common\src\main\java\com\aitest\common\entity\BaseEntity.java

@@ -10,9 +10,13 @@ export interface Testcase {
   project_id?: number
   projectId?: number
   test_module?: string
+  testModule?: string
   test_status?: string
+  testStatus?: string
   requirement_id?: number
+  requirementId?: number
   precondition?: string
+  preconditions?: string
   steps?: string
   expectedResult?: string
   createdAt?: string

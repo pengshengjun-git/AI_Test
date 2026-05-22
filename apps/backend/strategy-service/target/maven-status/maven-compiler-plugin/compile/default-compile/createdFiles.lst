@@ -1,2 +1,3 @@
-com\aitest\strategy\controller\StrategyController.class
 com\aitest\strategy\StrategyApplication.class
+com\aitest\strategy\config\SecurityConfig.class
+com\aitest\strategy\controller\StrategyController.class

@@ -10,6 +10,7 @@ public class DefectQueryDTO {
     private String title;
     private String priority;
     private String status;
+    private String severity;
     private Long projectId;
     private Long assignee;
     private Integer page = 1;

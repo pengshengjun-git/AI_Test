@@ -74,12 +74,12 @@
           <el-table-column prop="test_module" label="测试模块" width="120" show-overflow-tooltip />
           <el-table-column label="关联项目" width="120">
             <template #default="{ row }">
-              <span>{{ row.project_name || row.project_id || '-' }}</span>
+              <span>{{ row.projectName || row.project_name || row.projectId || row.project_id || '-' }}</span>
             </template>
           </el-table-column>
           <el-table-column label="关联需求" width="120">
             <template #default="{ row }">
-              <span>{{ row.requirement_name || row.requirement_id || '-' }}</span>
+              <span>{{ row.requirementTitle || row.requirement_name || row.requirementId || row.requirement_id || '-' }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="100">
@@ -150,28 +150,28 @@
             <el-option label="UI测试" value="UI" />
           </el-select>
         </el-form-item>
-        <el-form-item label="测试状态" prop="test_status" required>
-          <el-select v-model="testcaseForm.test_status" placeholder="请选择测试状态">
+        <el-form-item label="测试状态" prop="testStatus" required>
+          <el-select v-model="testcaseForm.testStatus" placeholder="请选择测试状态">
             <el-option label="待测试" value="待测试" />
             <el-option label="测试通过" value="测试通过" />
             <el-option label="测试失败" value="测试失败" />
           </el-select>
         </el-form-item>
-        <el-form-item label="测试模块" prop="test_module">
-          <InputWithLimit v-model="testcaseForm.test_module" placeholder="请输入测试模块" :maxlength="50" />
+        <el-form-item label="测试模块" prop="testModule">
+          <InputWithLimit v-model="testcaseForm.testModule" placeholder="请输入测试模块" :maxlength="50" />
         </el-form-item>
-        <el-form-item label="关联项目" prop="project_id">
-          <el-select v-model="testcaseForm.project_id" placeholder="请选择关联项目">
+        <el-form-item label="关联项目" prop="projectId">
+          <el-select v-model="testcaseForm.projectId" placeholder="请选择关联项目">
             <el-option v-for="project in projectOptions" :key="project.id" :label="project.name" :value="project.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="关联需求" prop="requirement_id">
-          <el-select v-model="testcaseForm.requirement_id" placeholder="请选择关联需求" clearable>
+        <el-form-item label="关联需求" prop="requirementId">
+          <el-select v-model="testcaseForm.requirementId" placeholder="请选择关联需求" clearable>
             <el-option v-for="req in requirementOptions" :key="req.id" :label="req.name" :value="req.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="前置条件" prop="precondition">
-          <InputWithLimit v-model="testcaseForm.precondition" type="textarea" :rows="2" placeholder="请输入前置条件" :maxlength="500" />
+        <el-form-item label="前置条件" prop="preconditions">
+          <InputWithLimit v-model="testcaseForm.preconditions" type="textarea" :rows="2" placeholder="请输入前置条件" :maxlength="500" />
         </el-form-item>
         <el-form-item label="测试步骤" prop="steps">
           <InputWithLimit v-model="testcaseForm.steps" type="textarea" :rows="4" placeholder="请输入测试步骤" :maxlength="500" />
@@ -191,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, onMounted } from 'vue'
+import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { Plus, Cpu } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -247,14 +247,14 @@ const testcaseForm = reactive<Testcase>({
   title: '',
   priority: 'P2',
   type: 'FUNCTIONAL',
-  precondition: '',
+  preconditions: '',
   steps: '',
   expectedResult: '',
   status: 'PENDING_REVIEW',
-  test_status: '待测试',
-  test_module: '',
-  requirement_id: undefined,
-  project_id: 1
+  testStatus: '待测试',
+  testModule: '',
+  requirementId: undefined,
+  projectId: 1
 })
 
 /**
@@ -263,7 +263,9 @@ const testcaseForm = reactive<Testcase>({
 const testcaseRules: FormRules = {
   title: [{ required: true, message: '请输入用例标题', trigger: 'blur' }],
   priority: [{ required: true, message: '请选择优先级', trigger: 'change' }],
-  type: [{ required: true, message: '请选择用例类型', trigger: 'change' }]
+  type: [{ required: true, message: '请选择用例类型', trigger: 'change' }],
+  projectId: [{ required: true, message: '请选择关联项目', trigger: 'change' }],
+  requirementId: [{ required: true, message: '请选择关联需求', trigger: 'change' }]
 }
 
 const testcaseFormRef = ref<FormInstance>()
@@ -391,26 +393,39 @@ const loadTestcaseList = async () => {
 /**
  * 显示创建对话框
  */
-const showCreateDialog = () => {
+const showCreateDialog = async () => {
   isEdit.value = false
   resetForm()
   dialogVisible.value = true
+  // 如果已经选择了项目，加载对应的需求
+  if (testcaseForm.projectId) {
+    await loadRequirementOptionsByProject(testcaseForm.projectId)
+  }
 }
 
 /**
  * 编辑用例
  */
-const handleEdit = (row: Testcase) => {
+const handleEdit = async (row: Testcase) => {
   isEdit.value = true
-  Object.assign(testcaseForm, row)
-  if (row.expectedResult !== undefined && !testcaseForm.expectedResult) {
-    testcaseForm.expectedResult = row.expectedResult
-  }
-  if (row.steps === undefined) {
-    testcaseForm.steps = ''
-  }
-  if (row.precondition === undefined) {
-    testcaseForm.precondition = ''
+  const projectId = row.projectId || row.project_id
+  Object.assign(testcaseForm, {
+    id: row.id,
+    title: row.title,
+    priority: row.priority,
+    type: row.type,
+    preconditions: row.preconditions || '',
+    steps: row.steps || '',
+    expectedResult: row.expectedResult || '',
+    status: row.status,
+    testStatus: row.testStatus || row.test_status || '待测试',
+    testModule: row.testModule || row.test_module || '',
+    requirementId: row.requirementId || row.requirement_id,
+    projectId: projectId
+  })
+  // 加载项目对应的需求选项
+  if (projectId) {
+    await loadRequirementOptionsByProject(projectId)
   }
   dialogVisible.value = true
 }
@@ -515,10 +530,14 @@ const resetForm = () => {
     title: '',
     priority: 'P2',
     type: 'FUNCTIONAL',
-    precondition: '',
+    preconditions: '',
     steps: '',
     expectedResult: '',
-    status: 'PENDING_REVIEW'
+    status: 'PENDING_REVIEW',
+    testStatus: '待测试',
+    testModule: '',
+    requirementId: undefined,
+    projectId: 1
   })
 }
 
@@ -564,13 +583,35 @@ const handleCurrentChange = (page: number) => {
 }
 
 /**
+ * 加载需求选项（按项目过滤）
+ */
+const loadRequirementOptionsByProject = async (projectId?: number) => {
+  try {
+    if (projectId) {
+      requirementOptions.value = await getRequirementOptions(projectId)
+    } else {
+      requirementOptions.value = []
+    }
+  } catch (error) {
+    console.error('加载需求选项失败:', error)
+  }
+}
+
+/**
+ * 监听项目选择变化
+ */
+watch(() => testcaseForm.projectId, (newProjectId) => {
+  testcaseForm.requirementId = undefined
+  loadRequirementOptionsByProject(newProjectId)
+})
+
+/**
  * 初始化
  */
 onMounted(async () => {
   loadTestcaseList()
   try {
     projectOptions.value = await getProjectOptions()
-    requirementOptions.value = await getRequirementOptions()
   } catch (error) {
     console.error('加载选项失败:', error)
   }
@@ -590,6 +631,8 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .page-title {
@@ -602,6 +645,7 @@ onMounted(async () => {
 .header-actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .filter-row {
@@ -612,5 +656,137 @@ onMounted(async () => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 1200px) {
+  .testcase-container {
+    padding: 16px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .page-title {
+    font-size: 20px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .testcase-container {
+    padding: 12px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .page-title {
+    font-size: 18px;
+  }
+  
+  .header-actions {
+    width: 100%;
+  }
+  
+  /* 优化表格在移动端的显示 */
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 4px;
+  }
+  
+  /* 隐藏一些非必要的列 */
+  :deep(.el-table .hidden-mobile) {
+    display: none;
+  }
+  
+  /* 优化分页在移动端的显示 */
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .pagination-row {
+    justify-content: center;
+  }
+  
+  /* 优化筛选表单在移动端的显示 */
+  :deep(.el-form--inline .el-form-item) {
+    margin-right: 0;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-form-item__content) {
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-input),
+  :deep(.el-form--inline .el-select) {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .testcase-container {
+    padding: 8px;
+  }
+  
+  .page-title {
+    font-size: 16px;
+  }
+  
+  /* 进一步优化移动端表格 */
+  :deep(.el-table) {
+    font-size: 11px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 6px 2px;
+  }
+  
+  /* 优化按钮在移动端的显示 */
+  :deep(.el-button) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  /* 优化对话框在移动端的显示 */
+  :deep(.el-dialog) {
+    width: 90% !important;
+    margin: 5vh auto !important;
+  }
+  
+  .header-actions {
+    justify-content: space-between;
+  }
+  
+  .header-actions .el-button {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .testcase-container {
+    padding: 6px;
+  }
+  
+  .header-row {
+    margin-bottom: 12px;
+  }
+  
+  .filter-row {
+    margin-bottom: 12px;
+  }
+  
+  .pagination-row {
+    margin-top: 12px;
+  }
 }
 </style>

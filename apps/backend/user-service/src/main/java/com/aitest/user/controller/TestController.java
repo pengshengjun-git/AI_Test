@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 测试控制器 - 用于测试数据库和Redis连接
+ * 测试控制器 - 用于测试数据库连接
  */
 @RestController
 @RequestMapping("/api/test")
@@ -31,18 +31,6 @@ public class TestController {
         boolean success = userService.testDatabaseConnection();
         result.put("success", success);
         result.put("message", success ? "数据库连接成功" : "数据库连接失败");
-        return Result.success(result);
-    }
-
-    /**
-     * 测试Redis连接
-     */
-    @GetMapping("/redis")
-    public Result<Map<String, Object>> testRedis() {
-        Map<String, Object> result = new HashMap<>();
-        boolean success = userService.testRedisConnection();
-        result.put("success", success);
-        result.put("message", success ? "Redis连接成功" : "Redis连接失败");
         return Result.success(result);
     }
 

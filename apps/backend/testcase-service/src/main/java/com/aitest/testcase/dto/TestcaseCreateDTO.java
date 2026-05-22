@@ -1,11 +1,9 @@
 package com.aitest.testcase.dto;
 
-import com.aitest.testcase.entity.TestcaseStep;
 import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.util.List;
 
 /**
  * 测试用例创建DTO
@@ -22,6 +20,7 @@ public class TestcaseCreateDTO {
     /**
      * 关联需求ID
      */
+    @NotNull(message = "需求ID不能为空")
     private Long requirementId;
 
     /**
@@ -56,14 +55,29 @@ public class TestcaseCreateDTO {
     private String status;
 
     /**
+     * 测试状态
+     */
+    private String testStatus;
+
+    /**
+     * 测试模块
+     */
+    private String testModule;
+
+    /**
+     * 测试步骤
+     */
+    private String steps;
+
+    /**
+     * 预期结果
+     */
+    private String expectedResult;
+
+    /**
      * 标签
      */
     private String tags;
-
-    /**
-     * 用例步骤
-     */
-    private List<TestcaseStep> steps;
 
     /**
      * 创建人ID

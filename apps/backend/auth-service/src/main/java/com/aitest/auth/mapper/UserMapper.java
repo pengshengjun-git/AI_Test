@@ -13,20 +13,26 @@ public interface UserMapper {
 
     /**
      * 根据用户名查询用户
+     * <p>
+     * 此方法通过SQL查询语句从数据库中查找指定用户名的用户记录。
+     * 查询条件包括用户名和已删除标记(deleted=0)，确保只返回未删除的用户记录。
+     *
+     * @param username 要查询的用户名
+     * @return 返回匹配的用户对象，如果未找到则可能返回null
      */
-    @Select("SELECT id, username, password_hash, email, role, status, created_at, updated_at, deleted FROM user WHERE username = #{username} AND deleted = 0")
+    @Select("SELECT id, username, password_hash, email, phone, real_name, department_id, status, mfa_enabled, created_at, updated_at, deleted FROM user WHERE username = #{username} AND deleted = 0")
     User selectByUsername(@Param("username") String username);
 
     /**
      * 根据邮箱查询用户
      */
-    @Select("SELECT id, username, password_hash, email, role, status, created_at, updated_at, deleted FROM user WHERE email = #{email} AND deleted = 0")
+    @Select("SELECT id, username, password_hash, email, status, mfa_enabled, created_at, updated_at, deleted FROM user WHERE email = #{email} AND deleted = 0")
     User selectByEmail(@Param("email") String email);
 
     /**
      * 根据用户ID查询用户
      */
-    @Select("SELECT id, username, password_hash, email, role, status, created_at, updated_at, deleted FROM user WHERE id = #{id} AND deleted = 0")
+    @Select("SELECT id, username, password_hash, email, status, mfa_enabled, created_at, updated_at, deleted FROM user WHERE id = #{id} AND deleted = 0")
     User selectById(@Param("id") Long id);
 
     /**

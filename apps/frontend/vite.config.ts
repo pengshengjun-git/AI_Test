@@ -14,7 +14,7 @@ export default defineConfig({
     }
   },
   server: {
-    port: 80,
+    port: 5173,
     host: '0.0.0.0',
     proxy: {
       '/api/v1/auth': {
@@ -30,18 +30,26 @@ export default defineConfig({
         changeOrigin: true
       },
       '/api/v1/testcases': {
-        target: 'http://localhost:9004',
-        changeOrigin: true
-      },
-      '/api/v1/defects': {
         target: 'http://localhost:9005',
         changeOrigin: true
       },
-      '/api/v1/requirements': {
+      '/api/v1/defects': {
         target: 'http://localhost:9006',
         changeOrigin: true
       },
+      '/api/v1/requirements': {
+        target: 'http://localhost:9004',
+        changeOrigin: true
+      },
       '/api/v1/dashboard': {
+        target: 'http://localhost:9007',
+        changeOrigin: true
+      },
+      '/api/v1/testplans': {
+        target: 'http://localhost:9007',
+        changeOrigin: true
+      },
+      '/api/v1/coverages': {
         target: 'http://localhost:9007',
         changeOrigin: true
       },
@@ -51,6 +59,22 @@ export default defineConfig({
       },
       '/api/v1/ai': {
         target: 'http://localhost:9010',
+        changeOrigin: true
+      },
+      '/api/users': {
+        target: 'http://localhost:9002',
+        changeOrigin: true
+      },
+      '/api/roles': {
+        target: 'http://localhost:9002',
+        changeOrigin: true
+      },
+      '/api/departments': {
+        target: 'http://localhost:9002',
+        changeOrigin: true
+      },
+      '/api/menus': {
+        target: 'http://localhost:9002',
         changeOrigin: true
       }
     }

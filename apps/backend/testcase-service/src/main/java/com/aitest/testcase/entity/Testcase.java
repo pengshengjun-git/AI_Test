@@ -89,9 +89,8 @@ public class Testcase extends BaseEntity {
     private String tags;
 
     /**
-     * 是否AI生成: 0-否, 1-是（非数据库字段）
+     * 是否AI生成: 0-否, 1-是
      */
-    @TableField(exist = false)
     private Integer aiGenerated;
 
     /**
@@ -115,4 +114,16 @@ public class Testcase extends BaseEntity {
      * 更新人ID
      */
     private Long updatedBy;
+
+    /**
+     * 项目名称（非数据库字段）
+     */
+    @TableField(exist = false)
+    private String projectName;
+
+    /**
+     * 需求标题（非数据库字段）
+     */
+    @TableField(exist = false)
+    private String requirementTitle;
 }

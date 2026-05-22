@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
  * 策略控制器
  */
 @RestController
-@RequestMapping("/api/v1/strategy")
+@RequestMapping({"/api/v1/strategy", "/api/v1/strategies"})
 public class StrategyController {
 
     // 模拟策略数据

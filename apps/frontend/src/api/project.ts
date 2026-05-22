@@ -6,10 +6,16 @@ export interface Project {
   code?: string
   description?: string
   status: 'PLANNING' | 'IN_PROGRESS' | 'COMPLETED' | 'ARCHIVED'
+  priority?: string
   testcaseCount?: number
+  requirementCount?: number
   defectCount?: number
   createdAt?: string
   updatedAt?: string
+  createTime?: string
+  updateTime?: string
+  ownerName?: string
+  createdBy?: number
 }
 
 export interface ProjectQueryParams {

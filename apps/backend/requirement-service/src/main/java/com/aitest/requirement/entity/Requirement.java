@@ -20,11 +20,6 @@ public class Requirement extends BaseEntity {
     private Long projectId;
 
     /**
-     * 需求编号
-     */
-    private String code;
-
-    /**
      * 需求标题
      */
     private String title;
@@ -35,7 +30,7 @@ public class Requirement extends BaseEntity {
     private String description;
 
     /**
-     * 需求类型: feature-功能, bug-缺陷, improvement-改进
+     * 需求类型: functional-功能, performance-性能, security-安全, usability-易用性
      */
     private String type;
 
@@ -45,38 +40,32 @@ public class Requirement extends BaseEntity {
     private String priority;
 
     /**
-     * 状态: draft-草稿, pending-待审核, approved-已通过, rejected-已拒绝, implemented-已实现, testing-测试中, closed-已关闭
+     * 状态: draft-草稿, reviewing-评审中, approved-已批准, implemented-已实现, closed-已关闭
      */
     private String status;
 
     /**
-     * 创建人ID
-     */
-    @TableField("created_by")
-    private Long creatorId;
-
-    /**
-     * 负责人ID
-     */
-    private Long assigneeId;
-
-    /**
-     * 版本号
-     */
-    private Integer version;
-
-    /**
-     * 来源: manual-手动, ai-AI生成
+     * 需求来源: manual-手动, import-导入, jira-Jira, confluence-Confluence
      */
     private String source;
 
     /**
-     * 是否AI分析过: 0-否, 1-是
+     * 关联文档URL
+     */
+    private String documentUrl;
+
+    /**
+     * 是否AI解析过: 0-否, 1-是
      */
     private Integer aiAnalyzed;
 
     /**
-     * 文档URL
+     * 创建人ID
      */
-    private String documentUrl;
+    private Long createdBy;
+
+    /**
+     * 更新人ID
+     */
+    private Long updatedBy;
 }

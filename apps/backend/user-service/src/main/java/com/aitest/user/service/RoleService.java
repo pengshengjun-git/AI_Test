@@ -1,16 +1,23 @@
 package com.aitest.user.service;
 
 import com.aitest.common.exception.BusinessException;
+import com.aitest.user.dto.RoleCreateDTO;
+import com.aitest.user.dto.RoleQueryDTO;
+import com.aitest.user.dto.RoleUpdateDTO;
+import com.aitest.user.dto.RoleVO;
 import com.aitest.user.entity.Role;
-import com.aitest.user.entity.UserRole;
 import com.aitest.user.mapper.RoleMapper;
-import com.aitest.user.mapper.UserRoleMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 角色服务
@@ -19,11 +26,9 @@ import java.util.List;
 public class RoleService extends ServiceImpl<RoleMapper, Role> {
 
     private final RoleMapper roleMapper;
-    private final UserRoleMapper userRoleMapper;
 
-    public RoleService(RoleMapper roleMapper, UserRoleMapper userRoleMapper) {
+    public RoleService(RoleMapper roleMapper) {
         this.roleMapper = roleMapper;
-        this.userRoleMapper = userRoleMapper;
     }
 
     /**
@@ -36,34 +41,65 @@ public class RoleService extends ServiceImpl<RoleMapper, Role> {
     }
 
     /**
+     * 分页查询角色
+     */
+    public IPage<RoleVO> queryRoles(RoleQueryDTO dto) {
+        Page<Role> page = new Page<>(dto.getPageNum(), dto.getPageSize());
+        LambdaQueryWrapper<Role> wrapper = new LambdaQueryWrapper<Role>()
+                .eq(Role::getDeleted, 0);
+        
+        if (dto.getName() != null && !dto.getName().isEmpty()) {
+            wrapper.like(Role::getName, dto.getName());
+        }
+        if (dto.getCode() != null && !dto.getCode().isEmpty()) {
+            wrapper.like(Role::getCode, dto.getCode());
+        }
+        if (dto.getStatus() != null) {
+            wrapper.eq(Role::getStatus, dto.getStatus());
+        }
+        
+        wrapper.orderByAsc(Role::getId);
+        
+        IPage<Role> resultPage = page(page, wrapper);
+        
+        return resultPage.convert(this::convertToVO);
+    }
+
+    /**
      * 创建角色
      */
     @Transactional(rollbackFor = Exception.class)
-    public Role createRole(Role role) {
-        Role existRole = getByCode(role.getCode());
+    public RoleVO createRole(RoleCreateDTO dto) {
+        Role existRole = getByCode(dto.getCode());
         if (existRole != null) {
             throw new BusinessException("角色编码已存在");
         }
+
+        Role role = new Role();
+        BeanUtils.copyProperties(dto, role);
         role.setStatus(1);
+        role.setDeleted(0);
         save(role);
-        return role;
+
+        return getRoleById(role.getId());
     }
 
     /**
      * 更新角色
      */
     @Transactional(rollbackFor = Exception.class)
-    public void updateRole(Long roleId, Role role) {
+    public void updateRole(Long roleId, RoleUpdateDTO dto) {
         Role existRole = getById(roleId);
         if (existRole == null || existRole.getDeleted() == 1) {
             throw new BusinessException("角色不存在");
         }
-        role.setId(roleId);
-        updateById(role);
+
+        BeanUtils.copyProperties(dto, existRole);
+        updateById(existRole);
     }
 
     /**
-     * 删除角色
+     * 删除角色（软删除）
      */
     @Transactional(rollbackFor = Exception.class)
     public void deleteRole(Long roleId) {
@@ -71,55 +107,43 @@ public class RoleService extends ServiceImpl<RoleMapper, Role> {
         if (role == null || role.getDeleted() == 1) {
             throw new BusinessException("角色不存在");
         }
+
+        if ("ADMIN".equals(role.getCode())) {
+            throw new BusinessException("系统管理员角色不可删除");
+        }
+
         role.setDeleted(1);
         updateById(role);
     }
 
     /**
-     * 为用户分配角色
+     * 获取角色详情
      */
-    @Transactional(rollbackFor = Exception.class)
-    public void assignRoleToUser(Long userId, Long roleId) {
-        // 检查是否已分配
-        UserRole exist = userRoleMapper.selectOne(
-                new LambdaQueryWrapper<UserRole>()
-                        .eq(UserRole::getUserId, userId)
-                        .eq(UserRole::getRoleId, roleId)
-        );
-        if (exist != null) {
-            return;
+    public RoleVO getRoleById(Long roleId) {
+        Role role = getById(roleId);
+        if (role == null || role.getDeleted() == 1) {
+            throw new BusinessException("角色不存在");
         }
-        UserRole userRole = new UserRole();
-        userRole.setUserId(userId);
-        userRole.setRoleId(roleId);
-        userRoleMapper.insert(userRole);
-    }
-
-    /**
-     * 移除用户角色
-     */
-    @Transactional(rollbackFor = Exception.class)
-    public void removeRoleFromUser(Long userId, Long roleId) {
-        userRoleMapper.delete(
-                new LambdaQueryWrapper<UserRole>()
-                        .eq(UserRole::getUserId, userId)
-                        .eq(UserRole::getRoleId, roleId)
-        );
-    }
-
-    /**
-     * 获取用户的角色列表
-     */
-    public List<Role> getRolesByUserId(Long userId) {
-        return roleMapper.selectRolesByUserId(userId);
+        return convertToVO(role);
     }
 
     /**
      * 获取所有角色
      */
-    public List<Role> getAllRoles() {
-        return list(new LambdaQueryWrapper<Role>()
+    public List<RoleVO> getAllRoles() {
+        List<Role> roles = list(new LambdaQueryWrapper<Role>()
                 .eq(Role::getDeleted, 0)
                 .orderByAsc(Role::getId));
+        return roles.stream().map(this::convertToVO).collect(Collectors.toList());
+    }
+
+    /**
+     * 转换为VO
+     */
+    private RoleVO convertToVO(Role role) {
+        RoleVO vo = new RoleVO();
+        BeanUtils.copyProperties(role, vo);
+        vo.setMenuIds(new ArrayList<>());
+        return vo;
     }
 }

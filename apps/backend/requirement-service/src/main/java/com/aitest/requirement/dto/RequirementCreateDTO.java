@@ -24,32 +24,42 @@ public class RequirementCreateDTO {
     private String title;
 
     /**
+     * 需求名称（兼容前端）
+     */
+    private String name;
+
+    /**
      * 需求描述
      */
     private String description;
 
     /**
-     * 需求类型
+     * 需求类型: functional-功能, performance-性能, security-安全, usability-易用性
      */
     private String type;
 
     /**
-     * 优先级
+     * 优先级: P0, P1, P2, P3
      */
     private String priority;
 
     /**
-     * 状态
+     * 状态: draft-草稿, reviewing-评审中, approved-已批准, implemented-已实现, closed-已关闭
      */
     private String status;
 
     /**
-     * 需求来源
+     * 需求来源: manual-手动, import-导入, jira-Jira, confluence-Confluence
      */
     private String source;
 
     /**
-     * 创建人ID
+     * 关联文档URL
      */
-    private Long createdBy;
+    private String documentUrl;
+
+    /**
+     * 是否AI解析过: 0-否, 1-是
+     */
+    private Integer aiAnalyzed;
 }

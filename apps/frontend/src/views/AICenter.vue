@@ -332,9 +332,12 @@ const handleSaveConfig = async () => {
     const response = await updateAIModelConfig(modelConfig)
     if (response.code === 200 || response.code === 0) {
       ElMessage.success('配置保存成功')
+    } else {
+      ElMessage.error(response.message || '配置保存失败')
     }
-  } catch (error) {
-    ElMessage.success('配置保存成功')
+  } catch (error: any) {
+    console.error('保存配置失败:', error)
+    ElMessage.error(error.message || '配置保存失败')
   }
 }
 
@@ -352,11 +355,12 @@ const handleCreateTask = async () => {
       ElMessage.success('任务创建成功')
       showTaskDialog.value = false
       loadAITaskList()
+    } else {
+      ElMessage.error(response.message || '任务创建失败')
     }
-  } catch (error) {
-    ElMessage.success('任务创建成功')
-    showTaskDialog.value = false
-    loadAITaskList()
+  } catch (error: any) {
+    console.error('创建任务失败:', error)
+    ElMessage.error(error.message || '任务创建失败')
   }
 }
 
@@ -372,6 +376,8 @@ onMounted(() => {
 <style scoped>
 .ai-center-container {
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header-row {
@@ -436,5 +442,133 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* 确保表格宽度正确 */
+:deep(.el-table) {
+  width: 100% !important;
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 1200px) {
+  .ai-center-container {
+    padding: 16px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .page-title {
+    font-size: 20px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .ai-center-container {
+    padding: 12px;
+  }
+  
+  .page-title {
+    font-size: 18px;
+  }
+  
+  /* 优化表格在移动端的显示 */
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 4px;
+  }
+  
+  /* 优化表单在移动端的显示 */
+  :deep(.el-form--inline .el-form-item) {
+    margin-right: 0;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-form-item__content) {
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-input),
+  :deep(.el-form--inline .el-select) {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .ai-center-container {
+    padding: 8px;
+  }
+  
+  .page-title {
+    font-size: 16px;
+  }
+  
+  /* 进一步优化移动端表格 */
+  :deep(.el-table) {
+    font-size: 11px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 6px 2px;
+  }
+  
+  /* 优化按钮在移动端的显示 */
+  :deep(.el-button) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  /* 优化对话框在移动端的显示 */
+  :deep(.el-dialog) {
+    width: 90% !important;
+    margin: 5vh auto !important;
+  }
+  
+  /* 优化功能卡片在移动端的显示 */
+  .feature-icon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .feature-icon :deep(.el-icon) {
+    font-size: 30px !important;
+  }
+  
+  .feature-card h3 {
+    font-size: 16px;
+  }
+  
+  .feature-card p {
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .ai-center-container {
+    padding: 6px;
+  }
+  
+  .header-row {
+    margin-bottom: 12px;
+  }
+  
+  .feature-row {
+    margin-bottom: 12px;
+  }
+  
+  .history-row {
+    margin-bottom: 12px;
+  }
+  
+  .model-row {
+    margin-bottom: 12px;
+  }
 }
 </style>

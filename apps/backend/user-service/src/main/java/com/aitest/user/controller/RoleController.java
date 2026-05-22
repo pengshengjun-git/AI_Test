@@ -1,18 +1,21 @@
 package com.aitest.user.controller;
 
 import com.aitest.common.result.Result;
-import com.aitest.user.entity.Role;
+import com.aitest.user.dto.RoleCreateDTO;
+import com.aitest.user.dto.RoleQueryDTO;
+import com.aitest.user.dto.RoleUpdateDTO;
+import com.aitest.user.dto.RoleVO;
 import com.aitest.user.service.RoleService;
-import jakarta.validation.Valid;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 /**
- * 角色控制器
+ * 角色管理控制器
  */
 @RestController
-@RequestMapping("/api/v1/roles")
+@RequestMapping("/api/roles")
 public class RoleController {
 
     private final RoleService roleService;
@@ -22,20 +25,29 @@ public class RoleController {
     }
 
     /**
-     * 获取所有角色
+     * 分页查询角色列表
      */
     @GetMapping
-    public Result<List<Role>> getAllRoles() {
-        List<Role> roles = roleService.getAllRoles();
+    public Result<IPage<RoleVO>> listRoles(RoleQueryDTO query) {
+        IPage<RoleVO> page = roleService.queryRoles(query);
+        return Result.success(page);
+    }
+
+    /**
+     * 获取所有角色列表
+     */
+    @GetMapping("/all")
+    public Result<List<RoleVO>> getAllRoles() {
+        List<RoleVO> roles = roleService.getAllRoles();
         return Result.success(roles);
     }
 
     /**
-     * 根据ID获取角色
+     * 获取角色详情
      */
-    @GetMapping("/{roleId}")
-    public Result<Role> getRoleById(@PathVariable Long roleId) {
-        Role role = roleService.getById(roleId);
+    @GetMapping("/{id}")
+    public Result<RoleVO> getRole(@PathVariable Long id) {
+        RoleVO role = roleService.getRoleById(id);
         return Result.success(role);
     }
 
@@ -43,53 +55,26 @@ public class RoleController {
      * 创建角色
      */
     @PostMapping
-    public Result<Role> createRole(@Valid @RequestBody Role role) {
-        Role createdRole = roleService.createRole(role);
-        return Result.success(createdRole);
+    public Result<RoleVO> createRole(@RequestBody RoleCreateDTO dto) {
+        RoleVO role = roleService.createRole(dto);
+        return Result.success(role);
     }
 
     /**
      * 更新角色
      */
-    @PutMapping("/{roleId}")
-    public Result<Void> updateRole(@PathVariable Long roleId, @RequestBody Role role) {
-        roleService.updateRole(roleId, role);
+    @PutMapping("/{id}")
+    public Result<Void> updateRole(@PathVariable Long id, @RequestBody RoleUpdateDTO dto) {
+        roleService.updateRole(id, dto);
         return Result.success();
     }
 
     /**
      * 删除角色
      */
-    @DeleteMapping("/{roleId}")
-    public Result<Void> deleteRole(@PathVariable Long roleId) {
-        roleService.deleteRole(roleId);
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteRole(@PathVariable Long id) {
+        roleService.deleteRole(id);
         return Result.success();
-    }
-
-    /**
-     * 为用户分配角色
-     */
-    @PostMapping("/{roleId}/users/{userId}")
-    public Result<Void> assignRoleToUser(@PathVariable Long roleId, @PathVariable Long userId) {
-        roleService.assignRoleToUser(userId, roleId);
-        return Result.success();
-    }
-
-    /**
-     * 移除用户角色
-     */
-    @DeleteMapping("/{roleId}/users/{userId}")
-    public Result<Void> removeRoleFromUser(@PathVariable Long roleId, @PathVariable Long userId) {
-        roleService.removeRoleFromUser(userId, roleId);
-        return Result.success();
-    }
-
-    /**
-     * 获取用户的角色列表
-     */
-    @GetMapping("/users/{userId}")
-    public Result<List<Role>> getRolesByUserId(@PathVariable Long userId) {
-        List<Role> roles = roleService.getRolesByUserId(userId);
-        return Result.success(roles);
     }
 }

@@ -26,11 +26,37 @@ public class DashboardController {
         Map<String, Object> stats = new HashMap<>();
         
         stats.put("projectCount", fetchCount("http://project-service:8003/api/v1/projects?page=1&size=1"));
-        stats.put("testcaseCount", fetchCount("http://testcase-service:8004/api/v1/testcases?page=1&size=1"));
-        stats.put("defectCount", fetchCount("http://defect-service:8005/api/v1/defects?page=1&size=1"));
-        stats.put("aiGeneratedCount", 0);
+        
+        Map<String, Object> testcaseStats = fetchStats("http://testcase-service:8004/api/v1/testcases/stats");
+        if (testcaseStats.isEmpty()) {
+            testcaseStats = fetchStats("http://localhost:9004/api/v1/testcases/stats");
+        }
+        stats.put("testcaseCount", testcaseStats.getOrDefault("total", 0));
+        stats.put("aiGeneratedCount", testcaseStats.getOrDefault("aiGenerated", 0));
+        
+        Map<String, Object> defectStats = fetchStats("http://defect-service:8005/api/v1/defects/stats");
+        if (defectStats.isEmpty()) {
+            defectStats = fetchStats("http://localhost:9005/api/v1/defects/stats");
+        }
+        stats.put("defectCount", defectStats.getOrDefault("total", 0));
         
         return Result.success(stats);
+    }
+    
+    private Map<String, Object> fetchStats(String url) {
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> result = objectMapper.readValue(response.getBody(), new TypeReference<Map<String, Object>>() {});
+                Object dataObj = result.get("data");
+                if (dataObj instanceof Map) {
+                    return (Map<String, Object>) dataObj;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching stats from " + url + ": " + e.getMessage());
+        }
+        return new HashMap<>();
     }
 
     private long fetchCount(String url) {

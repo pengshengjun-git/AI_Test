@@ -1,5 +1,5 @@
 <template>
-  <main class="max-w-full mx-auto px-4 py-6 space-y-6">
+  <main class="max-w-full mx-auto px-4 py-6 space-y-6 dashboard-container">
     <!-- 顶部指标卡片 -->
     <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div class="bg-surface-container-lowest p-6 rounded-lg shadow-sm border border-outline-variant flex items-center gap-6">
@@ -461,6 +461,25 @@
     </div>
   </main>
 </template>
+
+<style scoped>
+@media screen and (max-width: 768px) {
+  .dashboard-container {
+    padding: 12px !important;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .dashboard-container {
+    padding: 8px !important;
+  }
+
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+</style>
 
 <script setup lang="ts">
 import { reactive, ref, computed, onMounted } from 'vue'

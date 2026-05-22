@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 测试用例Service接口
@@ -69,4 +70,9 @@ public interface TestcaseService extends IService<Testcase> {
      * 移除标签
      */
     boolean removeTag(Long testcaseId, String tag);
+
+    /**
+     * 获取用例统计
+     */
+    Map<String, Object> getStatistics(Long projectId);
 }

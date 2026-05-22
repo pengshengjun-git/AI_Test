@@ -109,23 +109,33 @@
       <el-col :span="24">
         <el-table :data="coverageList" v-loading="loading" style="width: 100%">
           <el-table-column type="index" label="序号" width="80" index-method="(index) => index + 1" />
-          <el-table-column prop="project_id" label="项目ID" width="100" />
-          <el-table-column prop="covered_lines" label="已覆盖行数" width="120" />
-          <el-table-column prop="total_lines" label="总行数" width="100" />
-          <el-table-column prop="coverage_rate" label="覆盖率" width="120">
+          <el-table-column label="项目ID" width="100">
+            <template #default="{ row }">{{ row.project_id || row.projectId }}</template>
+          </el-table-column>
+          <el-table-column label="已覆盖行数" width="120">
+            <template #default="{ row }">{{ row.covered_lines || row.coveredLines }}</template>
+          </el-table-column>
+          <el-table-column label="总行数" width="100">
+            <template #default="{ row }">{{ row.total_lines || row.totalLines }}</template>
+          </el-table-column>
+          <el-table-column label="覆盖率" width="120">
             <template #default="{ row }">
-              <el-tag :type="getCoverageType(row.coverage_rate)">{{ row.coverage_rate.toFixed(1) }}%</el-tag>
+              <el-tag :type="getCoverageType(row.coverage_rate || row.coverageRate || 0)">
+                {{ (row.coverage_rate || row.coverageRate || 0).toFixed(1) }}%
+              </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="report_date" label="报告日期" width="150" />
+          <el-table-column label="报告日期" width="150">
+            <template #default="{ row }">{{ row.report_date || row.reportDate }}</template>
+          </el-table-column>
           <el-table-column label="创建时间" width="180">
             <template #default="{ row }">
-              {{ formatDateTime(row.created_at) }}
+              {{ formatDateTime(row.created_at || row.createTime) }}
             </template>
           </el-table-column>
           <el-table-column label="修改时间" width="180">
             <template #default="{ row }">
-              {{ formatDateTime(row.updated_at) }}
+              {{ formatDateTime(row.updated_at || row.updateTime) }}
             </template>
           </el-table-column>
           <el-table-column label="操作" width="150" fixed="right">
@@ -159,17 +169,19 @@
       @close="handleDialogClose"
     >
       <el-form ref="coverageFormRef" :model="coverageForm" :rules="coverageRules" label-width="100px">
-        <el-form-item label="项目ID" prop="project_id">
-          <el-input type="number" v-model="coverageForm.project_id" placeholder="请输入项目ID" />
+        <el-form-item label="关联项目" prop="project_id">
+          <el-select v-model="coverageForm.project_id" placeholder="请选择关联项目" style="width: 100%">
+            <el-option v-for="project in projectOptions" :key="project.id" :label="project.name" :value="project.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="已覆盖行数" prop="covered_lines">
-          <el-input type="number" v-model="coverageForm.covered_lines" placeholder="请输入已覆盖行数" />
+          <el-input-number v-model="coverageForm.covered_lines" :min="0" placeholder="请输入已覆盖行数" style="width: 100%" />
         </el-form-item>
         <el-form-item label="总行数" prop="total_lines">
-          <el-input type="number" v-model="coverageForm.total_lines" placeholder="请输入总行数" />
+          <el-input-number v-model="coverageForm.total_lines" :min="1" placeholder="请输入总行数" style="width: 100%" />
         </el-form-item>
         <el-form-item label="报告日期" prop="report_date">
-          <el-date-picker v-model="coverageForm.report_date" type="date" placeholder="选择报告日期" />
+          <el-date-picker v-model="coverageForm.report_date" type="date" placeholder="选择报告日期" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -189,31 +201,10 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { formatDateTime } from '@/utils/format'
 import { getProjectOptions } from '@/api/project'
-
-interface Coverage {
-  id: number | null
-  project_id: number
-  covered_lines: number
-  total_lines: number
-  coverage_rate: number
-  report_date: string
-  created_at: string
-  updated_at: string
-}
-
-interface CoverageStats {
-  totalCovered: number
-  totalLines: number
-  avgCoverage: number
-  coverageHistory: { date: string; rate: number }[]
-}
-
-interface CoverageQueryParams {
-  project_id: number | null
-}
+import { getCoverageList, getCoverageStats, createCoverage, updateCoverage, deleteCoverage, type Coverage, type CoverageStats, type CoverageQueryParams } from '@/api/coverage'
 
 const filterForm = reactive<CoverageQueryParams>({
-  project_id: null
+  project_id: undefined
 })
 
 const pagination = reactive({
@@ -241,19 +232,32 @@ const stats = reactive<CoverageStats>({
   coverageHistory: []
 })
 
-const coverageForm = reactive<Coverage>({
-  id: null,
+const coverageForm = reactive<Coverage & { 
+  projectId?: number, 
+  coveredLines?: number, 
+  totalLines?: number, 
+  coverageRate?: number, 
+  reportDate?: string,
+  createTime?: string,
+  updateTime?: string
+}>({
+  id: undefined,
   project_id: 1,
+  projectId: 1,
   covered_lines: 0,
+  coveredLines: 0,
   total_lines: 1000,
+  totalLines: 1000,
   coverage_rate: 0,
+  coverageRate: 0,
   report_date: new Date().toISOString().split('T')[0],
+  reportDate: new Date().toISOString().split('T')[0],
   created_at: '',
   updated_at: ''
 })
 
 const coverageRules: FormRules = {
-  project_id: [{ required: true, message: '请输入项目ID', trigger: 'blur' }],
+  project_id: [{ required: true, message: '请选择项目', trigger: 'change' }],
   covered_lines: [{ required: true, message: '请输入已覆盖行数', trigger: 'blur' }],
   total_lines: [{ required: true, message: '请输入总行数', trigger: 'blur' }]
 }
@@ -269,18 +273,15 @@ const getCoverageType = (rate: number) => {
 const loadCoverageList = async () => {
   loading.value = true
   try {
-    const params = new URLSearchParams()
-    if (filterForm.project_id) {
-      params.set('project_id', filterForm.project_id.toString())
-    }
-    params.set('page', pagination.page.toString())
-    params.set('size', pagination.size.toString())
-    
-    const response = await fetch(`/api/v1/coverage?${params.toString()}`)
-    const data = await response.json()
-    if (data.code === 0 || data.code === 200) {
-      coverageList.value = data.data?.records || data.data?.list || data.records || data.list || []
-      pagination.total = data.data?.total || coverageList.value.length
+    const response = await getCoverageList({
+      ...filterForm,
+      page: pagination.page,
+      size: pagination.size
+    })
+    if (response.code === 200 || response.code === 0) {
+      const data = response.data || response
+      coverageList.value = data.records || data.list || data.items || data || []
+      pagination.total = data.total || coverageList.value.length
     }
   } catch (error) {
     console.error('加载覆盖率列表失败:', error)
@@ -291,10 +292,9 @@ const loadCoverageList = async () => {
 
 const loadStats = async () => {
   try {
-    const response = await fetch('/api/v1/coverage/stats')
-    const data = await response.json()
-    if (data.code === 0 || data.code === 200) {
-      const result = data.data || data
+    const response = await getCoverageStats()
+    if (response.code === 200 || response.code === 0) {
+      const result = response.data || response
       stats.totalCovered = result.totalCovered || 0
       stats.totalLines = result.totalLines || 10000
       stats.avgCoverage = result.avgCoverage || 0
@@ -311,9 +311,27 @@ const showCreateDialog = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row: Coverage) => {
+const handleEdit = (row: Coverage & { 
+  projectId?: number, 
+  coveredLines?: number, 
+  totalLines?: number, 
+  coverageRate?: number, 
+  reportDate?: string 
+}) => {
   isEdit.value = true
-  Object.assign(coverageForm, row)
+  Object.assign(coverageForm, {
+    ...row,
+    project_id: row.project_id || row.projectId,
+    projectId: row.project_id || row.projectId,
+    covered_lines: row.covered_lines || row.coveredLines,
+    coveredLines: row.covered_lines || row.coveredLines,
+    total_lines: row.total_lines || row.totalLines,
+    totalLines: row.total_lines || row.totalLines,
+    coverage_rate: row.coverage_rate || row.coverageRate,
+    coverageRate: row.coverage_rate || row.coverageRate,
+    report_date: row.report_date || row.reportDate,
+    reportDate: row.report_date || row.reportDate
+  })
   dialogVisible.value = true
 }
 
@@ -324,9 +342,8 @@ const handleDelete = async (row: Coverage) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    const response = await fetch(`/api/v1/coverage/${row.id}`, { method: 'DELETE' })
-    const data = await response.json()
-    if (data.code === 0 || data.code === 200) {
+    const response = await deleteCoverage(row.id!)
+    if (response.code === 0 || response.code === 200) {
       ElMessage.success('删除成功')
       loadCoverageList()
       loadStats()
@@ -345,23 +362,40 @@ const handleSubmit = async () => {
     if (valid) {
       submitLoading.value = true
       try {
-        const method = isEdit.value ? 'PUT' : 'POST'
-        const url = isEdit.value ? `/api/v1/coverage/${coverageForm.id}` : '/api/v1/coverage'
-        const response = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(coverageForm)
-        })
-        const data = await response.json()
+        // 确保两种格式的字段都有值
+        const coveredLinesValue = coverageForm.covered_lines || coverageForm.coveredLines || 0
+        const totalLinesValue = coverageForm.total_lines || coverageForm.totalLines || 1
         
-        if (data.code === 0 || data.code === 200) {
+        coverageForm.covered_lines = coveredLinesValue
+        coverageForm.coveredLines = coveredLinesValue
+        coverageForm.total_lines = totalLinesValue
+        coverageForm.totalLines = totalLinesValue
+        
+        // 计算覆盖率
+        if (totalLinesValue > 0) {
+          const rate = Math.round((coveredLinesValue / totalLinesValue) * 100 * 10) / 10
+          coverageForm.coverage_rate = rate
+          coverageForm.coverageRate = rate
+        }
+        
+        let response
+        if (isEdit.value && coverageForm.id) {
+          response = await updateCoverage(coverageForm.id, coverageForm)
+        } else {
+          response = await createCoverage(coverageForm)
+        }
+        
+        if (response.code === 0 || response.code === 200) {
           ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
           dialogVisible.value = false
           loadCoverageList()
           loadStats()
+        } else {
+          ElMessage.error(response.message || '操作失败')
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('提交失败:', error)
+        ElMessage.error(error.message || '提交失败')
       } finally {
         submitLoading.value = false
       }
@@ -371,13 +405,19 @@ const handleSubmit = async () => {
 
 const resetForm = () => {
   coverageFormRef.value?.resetFields()
+  const today = new Date().toISOString().split('T')[0]
   Object.assign(coverageForm, {
     id: null,
     project_id: 1,
+    projectId: 1,
     covered_lines: 0,
+    coveredLines: 0,
     total_lines: 1000,
+    totalLines: 1000,
     coverage_rate: 0,
-    report_date: new Date().toISOString().split('T')[0],
+    coverageRate: 0,
+    report_date: today,
+    reportDate: today,
     created_at: '',
     updated_at: ''
   })
@@ -393,7 +433,7 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
-  filterForm.project_id = null
+  filterForm.project_id = undefined
   handleSearch()
 }
 
@@ -421,6 +461,8 @@ onMounted(async () => {
 <style scoped>
 .coverage-container {
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header-row {
@@ -431,6 +473,8 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .page-title {
@@ -603,5 +647,133 @@ onMounted(async () => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+/* 确保表格宽度正确 */
+:deep(.el-table) {
+  width: 100% !important;
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 1200px) {
+  .coverage-container {
+    padding: 16px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .page-title {
+    font-size: 20px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .coverage-container {
+    padding: 12px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .page-title {
+    font-size: 18px;
+  }
+  
+  /* 优化表格在移动端的显示 */
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 4px;
+  }
+  
+  /* 优化分页在移动端的显示 */
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .pagination-row {
+    justify-content: center;
+  }
+  
+  /* 优化筛选表单在移动端的显示 */
+  :deep(.el-form--inline .el-form-item) {
+    margin-right: 0;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-form-item__content) {
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-input),
+  :deep(.el-form--inline .el-select) {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .coverage-container {
+    padding: 8px;
+  }
+  
+  .page-title {
+    font-size: 16px;
+  }
+  
+  /* 进一步优化移动端表格 */
+  :deep(.el-table) {
+    font-size: 11px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 6px 2px;
+  }
+  
+  /* 优化按钮在移动端的显示 */
+  :deep(.el-button) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  /* 优化对话框在移动端的显示 */
+  :deep(.el-dialog) {
+    width: 90% !important;
+    margin: 5vh auto !important;
+  }
+  
+  /* 优化统计卡片在移动端的显示 */
+  .rate-number {
+    font-size: 36px;
+  }
+  
+  .rate-unit {
+    font-size: 18px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .coverage-container {
+    padding: 6px;
+  }
+  
+  .header-row {
+    margin-bottom: 12px;
+  }
+  
+  .filter-row {
+    margin-bottom: 12px;
+  }
+  
+  .pagination-row {
+    margin-top: 12px;
+  }
 }
 </style>

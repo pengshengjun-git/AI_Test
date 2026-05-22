@@ -49,45 +49,45 @@
 
     <el-row :gutter="20">
       <el-col :span="24">
-        <el-table :data="requirementList" v-loading="loading" style="width: 100%">
-          <el-table-column type="index" label="序号" width="80" index-method="(index) => index + 1" />
-          <el-table-column prop="name" label="需求名称" width="150" show-overflow-tooltip />
-          <el-table-column prop="type" label="需求类型" width="110">
+        <el-table :data="requirementList" v-loading="loading" style="width: 100%" border stripe>
+          <el-table-column type="index" label="序号" width="70" index-method="(index) => index + 1" />
+          <el-table-column prop="name" label="需求名称" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="type" label="需求类型" width="100">
             <template #default="{ row }">
               {{ getTypeText(row.type) }}
             </template>
           </el-table-column>
-          <el-table-column prop="priority" label="优先级" width="100">
+          <el-table-column prop="priority" label="优先级" width="90">
             <template #default="{ row }">
               <el-tag :type="getPriorityType(row.priority)">{{ getPriorityText(row.priority) }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="100">
+          <el-table-column prop="status" label="状态" width="90">
             <template #default="{ row }">
               <el-tag :type="getStatusType(row.status)">{{ getRequirementStatusText(row.status) }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="projectId" label="关联项目" width="150">
+          <el-table-column prop="projectName" label="关联项目" min-width="120" show-overflow-tooltip>
             <template #default="{ row }">
-              {{ getProjectName(row.projectId || row.project_id) }}
+              {{ row.projectName || getProjectName(row.projectId || row.project_id) || '-' }}
             </template>
           </el-table-column>
-          <el-table-column label="创建人" width="100">
+          <el-table-column prop="creatorName" label="创建人" width="90" show-overflow-tooltip>
             <template #default="{ row }">
-              {{ row.proposer || (row.proposerId ? '用户' + row.proposerId : '-') }}
+              {{ row.creatorName || row.proposer || (row.proposerId ? '用户' + row.proposerId : '-') }}
             </template>
           </el-table-column>
-          <el-table-column label="创建时间" width="180">
+          <el-table-column label="创建时间" width="160">
             <template #default="{ row }">
               {{ formatDateTime(row.createTime || row.created_at) }}
             </template>
           </el-table-column>
-          <el-table-column label="修改时间" width="180">
+          <el-table-column label="修改时间" width="160">
             <template #default="{ row }">
               {{ formatDateTime(row.updateTime || row.updated_at) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column label="操作" width="150" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
               <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
@@ -302,7 +302,8 @@ const requirementForm = reactive<Requirement>({
 const requirementRules: FormRules = {
   name: [{ required: true, message: '请输入需求名称', trigger: 'blur' }],
   type: [{ required: true, message: '请选择需求类型', trigger: 'change' }],
-  priority: [{ required: true, message: '请选择优先级', trigger: 'change' }]
+  priority: [{ required: true, message: '请选择优先级', trigger: 'change' }],
+  projectId: [{ required: true, message: '请选择关联项目', trigger: 'change' }]
 }
 
 const requirementFormRef = ref<FormInstance>()
@@ -425,21 +426,36 @@ const handleSubmit = async () => {
     if (valid) {
       submitLoading.value = true
       try {
-        const submitData = {
+        const submitData: any = {
           title: requirementForm.name,
           projectId: requirementForm.projectId,
           description: requirementForm.description,
           type: requirementForm.type,
           priority: requirementForm.priority,
           source: requirementForm.source,
-          status: requirementForm.status
+          status: requirementForm.status,
+          proposer: requirementForm.proposer,
+          proposerTime: requirementForm.proposer_time,
+          effectiveVersion: requirementForm.effective_version,
+          acceptanceCriteria: requirementForm.acceptance_criteria,
+          owner: requirementForm.owner,
+          reviewer: requirementForm.reviewer,
+          permissionScope: requirementForm.permission_scope,
+          reviewResult: requirementForm.review_result,
+          reviewComments: requirementForm.review_comments,
+          onlineTime: requirementForm.online_time,
+          closeReason: requirementForm.close_reason
         }
         
         let response
-        if (isEdit.value) {
-          response = await updateRequirement(requirementForm.id!, submitData)
+        if (isEdit.value && requirementForm.id) {
+          // 编辑时更新
+          response = await updateRequirement(requirementForm.id, submitData)
         } else {
-          response = await createRequirement(submitData)
+          // 新建时，确保不包含id字段
+          const createData = { ...submitData }
+          delete createData.id
+          response = await createRequirement(createData)
         }
         
         if (response.code === 200 || response.code === 0) {
@@ -449,9 +465,9 @@ const handleSubmit = async () => {
         } else {
           ElMessage.error(response.message || '操作失败')
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('提交失败:', error)
-        ElMessage.error('提交失败')
+        ElMessage.error(error.message || '提交失败')
       } finally {
         submitLoading.value = false
       }
@@ -472,8 +488,8 @@ const resetForm = () => {
     proposer_time: new Date().toISOString(),
     effective_version: '',
     acceptance_criteria: '',
-    projectId: 1,
-    project_id: 1,
+    projectId: null,
+    project_id: null,
     owner: '',
     reviewer: '',
     permission_scope: 'public',
@@ -533,6 +549,8 @@ onMounted(() => {
 <style scoped>
 .requirement-container {
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header-row {
@@ -543,6 +561,8 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .page-title {
@@ -560,5 +580,129 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+/* 确保表格宽度正确 */
+:deep(.el-table) {
+  width: 100% !important;
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 1200px) {
+  .requirement-container {
+    padding: 16px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .page-title {
+    font-size: 20px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .requirement-container {
+    padding: 12px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .page-title {
+    font-size: 18px;
+  }
+  
+  /* 优化表格在移动端的显示 */
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 4px;
+  }
+  
+  /* 隐藏一些非必要的列 */
+  :deep(.el-table .hidden-mobile) {
+    display: none;
+  }
+  
+  /* 优化分页在移动端的显示 */
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .pagination-row {
+    justify-content: center;
+  }
+  
+  /* 优化筛选表单在移动端的显示 */
+  :deep(.el-form--inline .el-form-item) {
+    margin-right: 0;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-form-item__content) {
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-input),
+  :deep(.el-form--inline .el-select) {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .requirement-container {
+    padding: 8px;
+  }
+  
+  .page-title {
+    font-size: 16px;
+  }
+  
+  /* 进一步优化移动端表格 */
+  :deep(.el-table) {
+    font-size: 11px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 6px 2px;
+  }
+  
+  /* 优化按钮在移动端的显示 */
+  :deep(.el-button) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  /* 优化对话框在移动端的显示 */
+  :deep(.el-dialog) {
+    width: 90% !important;
+    margin: 5vh auto !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .requirement-container {
+    padding: 6px;
+  }
+  
+  .header-row {
+    margin-bottom: 12px;
+  }
+  
+  .filter-row {
+    margin-bottom: 12px;
+  }
+  
+  .pagination-row {
+    margin-top: 12px;
+  }
 }
 </style>

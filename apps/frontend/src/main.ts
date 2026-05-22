@@ -7,6 +7,7 @@ import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import './style.css'
 import App from './App.vue'
 import router from './router'
+import { permissionDirective, roleDirective } from '@/directives/permission'
 
 /**
  * 应用入口
@@ -47,6 +48,10 @@ if (typeof ResizeObserver !== 'undefined') {
     }
   }
 }
+
+// 注册全局指令
+app.directive('permission', permissionDirective)
+app.directive('role', roleDirective)
 
 app.use(pinia)
 app.use(router)

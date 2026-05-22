@@ -8,14 +8,8 @@
       :rows="rows"
       @change="$emit('change', $event)"
       :class="{ 'input-exceeded': isExceeded }"
+      :show-word-limit="showCounter"
     />
-    <div v-if="showCounter" class="counter" :class="{ 'counter-exceeded': isExceeded }">
-      {{ currentLength }}/{{ maxlength }}
-    </div>
-    <div v-if="showTip && isExceeded" class="tip">
-      <span class="material-symbols-outlined">error</span>
-      <span>已超出 {{ currentLength - maxlength }} 个字符</span>
-    </div>
   </div>
 </template>
 
@@ -67,36 +61,12 @@ const isExceeded = computed(() => currentLength.value > props.maxlength)
 <style scoped>
 .input-with-limit {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  width: 100%;
 }
 
-.input-exceeded :deep(.el-input__inner) {
+.input-exceeded :deep(.el-input__inner),
+.input-exceeded :deep(.el-textarea__inner) {
   border-color: #ef4444;
   background-color: #fef2f2;
-}
-
-.counter {
-  align-self: flex-end;
-  font-size: 12px;
-  color: #9ca3af;
-  margin-top: 4px;
-}
-
-.counter-exceeded {
-  color: #ef4444;
-}
-
-.tip {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #ef4444;
-  margin-top: 4px;
-}
-
-.tip .material-symbols-outlined {
-  font-size: 14px;
 }
 </style>

@@ -67,12 +67,12 @@
           </el-table-column>
           <el-table-column label="关联项目" width="120">
             <template #default="{ row }">
-              <span>{{ row.project_name || row.project_id || '-' }}</span>
+              <span>{{ row.project_name || row.project_id || row.projectId || '-' }}</span>
             </template>
           </el-table-column>
           <el-table-column label="关联需求" width="120">
             <template #default="{ row }">
-              <span>{{ row.requirement_name || row.requirement_id || '-' }}</span>
+              <span>{{ row.requirement_name || row.requirement_id || row.requirementId || '-' }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="handler" label="处理人" width="100" />
@@ -146,7 +146,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="关联需求" prop="requirement_id">
-          <el-select v-model="defectForm.requirement_id" placeholder="请选择关联需求">
+          <el-select v-model="defectForm.requirement_id" placeholder="请选择关联需求" clearable>
             <el-option v-for="req in requirementOptions" :key="req.id" :label="req.name" :value="req.id" />
           </el-select>
         </el-form-item>
@@ -171,7 +171,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, onMounted } from 'vue'
+import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -222,18 +222,27 @@ const dialogTitle = computed(() => isEdit.value ? '编辑缺陷' : '创建缺陷
 /**
  * 缺陷表单
  */
-const defectForm = reactive<Defect>({
+const defectForm = reactive<Defect & { 
+  projectId?: number, 
+  requirementId?: number, 
+  stepsToReproduce?: string,
+  createTime?: string,
+  updateTime?: string
+}>({
   id: undefined,
   title: '',
   severity: 'NORMAL',
   priority: 'P2',
   module: '',
   steps: '',
+  stepsToReproduce: '',
   expectedResult: '',
   actualResult: '',
   status: 'NEW',
-  project_id: 1,
-  requirement_id: undefined
+  project_id: undefined,
+  projectId: undefined,
+  requirement_id: undefined,
+  requirementId: undefined
 })
 
 /**
@@ -252,7 +261,9 @@ const requirementOptions = ref<{ id: number; name: string }[]>([])
 const defectRules: FormRules = {
   title: [{ required: true, message: '请输入缺陷标题', trigger: 'blur' }],
   severity: [{ required: true, message: '请选择严重程度', trigger: 'change' }],
-  priority: [{ required: true, message: '请选择优先级', trigger: 'change' }]
+  priority: [{ required: true, message: '请选择优先级', trigger: 'change' }],
+  project_id: [{ required: true, message: '请选择关联项目', trigger: 'change' }],
+  requirement_id: [{ required: true, message: '请选择关联需求', trigger: 'change' }]
 }
 
 const defectFormRef = ref<FormInstance>()
@@ -261,7 +272,7 @@ const defectFormRef = ref<FormInstance>()
  * 获取严重程度标签类型
  */
 const getSeverityType = (severity: string) => {
-  const severityUpper = severity.toUpperCase()
+  const severityUpper = severity?.toUpperCase() || ''
   const map: Record<string, string> = {
     'FATAL': 'danger',
     'SERIOUS': 'warning',
@@ -292,19 +303,21 @@ const getSeverityText = (severity: string) => {
  * 获取优先级标签类型
  */
 const getPriorityType = (priority: string) => {
+  const priorityUpper = priority?.toUpperCase() || ''
   const map: Record<string, string> = {
     'P0': 'danger',
     'P1': 'warning',
     'P2': 'primary',
     'P3': 'info'
   }
-  return map[priority] || 'info'
+  return map[priorityUpper] || map[priority] || 'info'
 }
 
 /**
  * 获取状态标签类型
  */
 const getStatusType = (status: string) => {
+  const statusUpper = status?.toUpperCase() || ''
   const map: Record<string, string> = {
     'NEW': 'info',
     'CONFIRMING': 'warning',
@@ -312,7 +325,7 @@ const getStatusType = (status: string) => {
     'FIXED': 'success',
     'CLOSED': ''
   }
-  return map[status] || 'info'
+  return map[statusUpper] || map[status] || 'info'
 }
 
 /**
@@ -353,9 +366,33 @@ const loadDefectList = async () => {
 }
 
 /**
+ * 加载需求选项（按项目过滤）
+ */
+const loadRequirementOptionsByProject = async (projectId?: number) => {
+  try {
+    if (projectId) {
+      requirementOptions.value = await getRequirementOptions(projectId)
+    } else {
+      requirementOptions.value = []
+    }
+  } catch (error) {
+    console.error('加载需求选项失败:', error)
+  }
+}
+
+/**
+ * 监听项目选择变化
+ */
+watch(() => defectForm.project_id, (newProjectId) => {
+  defectForm.requirement_id = undefined
+  defectForm.requirementId = undefined
+  loadRequirementOptionsByProject(newProjectId)
+})
+
+/**
  * 显示创建对话框
  */
-const showCreateDialog = () => {
+const showCreateDialog = async () => {
   isEdit.value = false
   resetForm()
   dialogVisible.value = true
@@ -364,9 +401,26 @@ const showCreateDialog = () => {
 /**
  * 编辑缺陷
  */
-const handleEdit = (row: Defect) => {
+const handleEdit = async (row: Defect & { 
+  projectId?: number, 
+  requirementId?: number, 
+  stepsToReproduce?: string 
+}) => {
   isEdit.value = true
-  Object.assign(defectForm, row)
+  const projectId = row.project_id || row.projectId
+  Object.assign(defectForm, {
+    ...row,
+    project_id: projectId,
+    projectId: projectId,
+    requirement_id: row.requirement_id || row.requirementId,
+    requirementId: row.requirement_id || row.requirementId,
+    steps: row.steps || row.stepsToReproduce,
+    stepsToReproduce: row.steps || row.stepsToReproduce
+  })
+  // 加载项目对应的需求选项
+  if (projectId) {
+    await loadRequirementOptionsByProject(projectId)
+  }
   dialogVisible.value = true
 }
 
@@ -421,20 +475,32 @@ const handleSubmit = async () => {
     if (valid) {
       submitLoading.value = true
       try {
+        // 准备提交数据，统一字段名称
+        const submitData = {
+          ...defectForm,
+          project_id: defectForm.project_id || defectForm.projectId,
+          requirement_id: defectForm.requirement_id || defectForm.requirementId,
+          steps: defectForm.steps || defectForm.stepsToReproduce,
+          stepsToReproduce: defectForm.steps || defectForm.stepsToReproduce
+        }
+        
         let response
-        if (isEdit.value) {
-          response = await updateDefect(defectForm.id!, defectForm)
+        if (isEdit.value && defectForm.id) {
+          response = await updateDefect(defectForm.id, submitData)
         } else {
-          response = await createDefect(defectForm)
+          response = await createDefect(submitData)
         }
         
         if (response.code === 200 || response.code === 0) {
           ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
           dialogVisible.value = false
           loadDefectList()
+        } else {
+          ElMessage.error(response.message || '操作失败')
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('提交失败:', error)
+        ElMessage.error(error.message || '提交失败')
       } finally {
         submitLoading.value = false
       }
@@ -454,9 +520,14 @@ const resetForm = () => {
     priority: 'P2',
     module: '',
     steps: '',
+    stepsToReproduce: '',
     expectedResult: '',
     actualResult: '',
-    status: 'NEW'
+    status: 'NEW',
+    project_id: undefined,
+    projectId: undefined,
+    requirement_id: undefined,
+    requirementId: undefined
   })
 }
 
@@ -508,7 +579,6 @@ onMounted(async () => {
   loadDefectList()
   try {
     projectOptions.value = await getProjectOptions()
-    requirementOptions.value = await getRequirementOptions()
   } catch (error) {
     console.error('加载选项失败:', error)
   }
@@ -518,6 +588,8 @@ onMounted(async () => {
 <style scoped>
 .defect-container {
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header-row {
@@ -528,6 +600,8 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .page-title {
@@ -545,5 +619,129 @@ onMounted(async () => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+/* 确保表格宽度正确 */
+:deep(.el-table) {
+  width: 100% !important;
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 1200px) {
+  .defect-container {
+    padding: 16px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .page-title {
+    font-size: 20px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .defect-container {
+    padding: 12px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .page-title {
+    font-size: 18px;
+  }
+  
+  /* 优化表格在移动端的显示 */
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 4px;
+  }
+  
+  /* 隐藏一些非必要的列 */
+  :deep(.el-table .hidden-mobile) {
+    display: none;
+  }
+  
+  /* 优化分页在移动端的显示 */
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .pagination-row {
+    justify-content: center;
+  }
+  
+  /* 优化筛选表单在移动端的显示 */
+  :deep(.el-form--inline .el-form-item) {
+    margin-right: 0;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-form-item__content) {
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-input),
+  :deep(.el-form--inline .el-select) {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .defect-container {
+    padding: 8px;
+  }
+  
+  .page-title {
+    font-size: 16px;
+  }
+  
+  /* 进一步优化移动端表格 */
+  :deep(.el-table) {
+    font-size: 11px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 6px 2px;
+  }
+  
+  /* 优化按钮在移动端的显示 */
+  :deep(.el-button) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  /* 优化对话框在移动端的显示 */
+  :deep(.el-dialog) {
+    width: 90% !important;
+    margin: 5vh auto !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .defect-container {
+    padding: 6px;
+  }
+  
+  .header-row {
+    margin-bottom: 12px;
+  }
+  
+  .filter-row {
+    margin-bottom: 12px;
+  }
+  
+  .pagination-row {
+    margin-top: 12px;
+  }
 }
 </style>

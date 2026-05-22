@@ -14,19 +14,9 @@ public class ProjectQueryDTO {
     private String name;
 
     /**
-     * 状态: active-活跃, archived-归档
+     * 状态: PLANNING-规划中, IN_PROGRESS-进行中, COMPLETED-已完成, ARCHIVED-已归档
      */
     private String status;
-
-    /**
-     * 可见性: private-私有, public-公开
-     */
-    private String visibility;
-
-    /**
-     * 负责人ID
-     */
-    private Long ownerId;
 
     /**
      * 页码（兼容page和pageNum参数）

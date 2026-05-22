@@ -14,7 +14,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 缺陷服务实现
@@ -85,6 +87,9 @@ public class DefectServiceImpl extends ServiceImpl<DefectMapper, Defect> impleme
         if (StringUtils.hasText(dto.getStatus())) {
             wrapper.eq(Defect::getStatus, dto.getStatus());
         }
+        if (StringUtils.hasText(dto.getSeverity())) {
+            wrapper.eq(Defect::getSeverity, dto.getSeverity());
+        }
         if (dto.getProjectId() != null) {
             wrapper.eq(Defect::getProjectId, dto.getProjectId());
         }
@@ -110,5 +115,33 @@ public class DefectServiceImpl extends ServiceImpl<DefectMapper, Defect> impleme
             this.updateById(defect);
         }
         return defect;
+    }
+
+    @Override
+    public Map<String, Object> getStatistics(Long projectId) {
+        Map<String, Object> stats = new HashMap<>();
+        
+        if (projectId != null) {
+            // 统计所有属于该项目的缺陷：直接关联 + 通过需求关联
+            LambdaQueryWrapper<Defect> wrapper = new LambdaQueryWrapper<>();
+            wrapper.and(w -> w.eq(Defect::getProjectId, projectId)
+                    .or()
+                    .exists("SELECT 1 FROM requirement r WHERE r.id = defect.requirement_id AND r.project_id = {0}", projectId));
+            stats.put("total", this.count(wrapper));
+            
+            LambdaQueryWrapper<Defect> openWrapper = new LambdaQueryWrapper<>();
+            openWrapper.and(w -> w.eq(Defect::getProjectId, projectId)
+                    .or()
+                    .exists("SELECT 1 FROM requirement r WHERE r.id = defect.requirement_id AND r.project_id = {0}", projectId));
+            openWrapper.ne(Defect::getStatus, "RESOLVED").ne(Defect::getStatus, "CLOSED");
+            stats.put("open", this.count(openWrapper));
+        } else {
+            stats.put("total", this.count());
+            LambdaQueryWrapper<Defect> openWrapper = new LambdaQueryWrapper<>();
+            openWrapper.ne(Defect::getStatus, "RESOLVED").ne(Defect::getStatus, "CLOSED");
+            stats.put("open", this.count(openWrapper));
+        }
+        
+        return stats;
     }
 }

@@ -6,6 +6,7 @@ import com.aitest.defect.entity.Defect;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 缺陷服务接口
@@ -27,4 +28,6 @@ public interface DefectService {
     List<Defect> getDefectsByProjectId(Long projectId);
 
     Defect assignDefect(Long id, Long assignee);
+
+    Map<String, Object> getStatistics(Long projectId);
 }

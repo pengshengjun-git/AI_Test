@@ -16,26 +16,19 @@ public class User extends BaseEntity {
 
     private String email;
 
-    @TableField(exist = false)
     private String phone;
 
-    @TableField(exist = false)
     private String realName;
 
     @TableField(exist = false)
     private String avatar;
 
-    private String status;
+    private Integer status;
 
-    @TableField(exist = false)
     private Integer mfaEnabled;
-
-    @TableField(exist = false)
-    private String role;
 
     private Integer deleted;
 
-    @TableField(exist = false)
     private Long departmentId;
 
     public String getUsername() {
@@ -86,20 +79,12 @@ public class User extends BaseEntity {
         this.avatar = avatar;
     }
 
-    public String getStatus() {
+    public Integer getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Integer status) {
         this.status = status;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
     }
 
     public Integer getDeleted() {

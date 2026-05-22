@@ -54,13 +54,45 @@ public class RequirementController {
      * 查询需求列表（兼容前端调用）
      */
     @GetMapping
-    public Result<Map<String, Object>> listRequirements(RequirementQueryDTO dto) {
-        IPage<Requirement> page = requirementService.queryRequirements(dto);
+    public Result<Map<String, Object>> listRequirements(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String priority,
+            @RequestParam(required = false) Long projectId,
+            @RequestParam(required = false) Long project_id,
+            @RequestParam(required = false, defaultValue = "1") Integer page,
+            @RequestParam(required = false, defaultValue = "10") Integer size) {
+        
+        RequirementQueryDTO dto = new RequirementQueryDTO();
+        
+        // 兼容搜索关键词
+        if (name != null && !name.isEmpty()) {
+            dto.setKeyword(name);
+        } else if (title != null && !title.isEmpty()) {
+            dto.setKeyword(title);
+        }
+        
+        // 兼容项目ID
+        if (projectId != null) {
+            dto.setProjectId(projectId);
+        } else if (project_id != null) {
+            dto.setProjectId(project_id);
+        }
+        
+        dto.setStatus(status);
+        dto.setPriority(priority);
+        
+        // 兼容分页参数
+        dto.setPageNum(page);
+        dto.setPageSize(size);
+        
+        IPage<Requirement> pageResult = requirementService.queryRequirements(dto);
         Map<String, Object> data = new HashMap<>();
-        data.put("list", page.getRecords());
-        data.put("total", page.getTotal());
-        data.put("page", page.getCurrent());
-        data.put("size", page.getSize());
+        data.put("list", pageResult.getRecords());
+        data.put("total", pageResult.getTotal());
+        data.put("page", pageResult.getCurrent());
+        data.put("size", pageResult.getSize());
         return Result.success(data);
     }
 

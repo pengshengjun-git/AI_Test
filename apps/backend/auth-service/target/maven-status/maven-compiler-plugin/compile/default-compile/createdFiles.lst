@@ -3,4 +3,5 @@ com\aitest\auth\controller\AuthController.class
 com\aitest\auth\service\AuthService.class
 com\aitest\auth\entity\User.class
 com\aitest\auth\mapper\UserMapper.class
+com\aitest\auth\service\PasswordGenerator.class
 com\aitest\auth\config\SecurityConfig.class

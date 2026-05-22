@@ -29,6 +29,8 @@ export interface RequirementQueryParams {
   title?: string
   status?: string
   priority?: string
+  projectId?: number
+  project_id?: number
   page?: number
   size?: number
 }
@@ -89,8 +91,12 @@ export const deleteRequirement = (id: number) => {
 /**
  * 获取需求下拉选项列表（id + name 映射）
  */
-export const getRequirementOptions = async () => {
-  const res = await getRequirementList({ page: 1, size: 100 })
+export const getRequirementOptions = async (projectId?: number) => {
+  const params: RequirementQueryParams = { page: 1, size: 100 }
+  if (projectId) {
+    params.projectId = projectId
+  }
+  const res = await getRequirementList(params)
   const list = res.data?.list ?? []
   return list.map((item: any) => ({
     id: item.id,

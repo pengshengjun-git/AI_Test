@@ -1,7 +1,7 @@
 package com.aitest.defect.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -30,12 +30,15 @@ public class DefectCreateDTO {
     
     private String actualResult;
     
+    @JsonProperty("requirement_id")
     private Long requirementId;
     
-    @NotNull(message = "项目ID不能为空")
+    @JsonProperty("project_id")
     private Long projectId;
 
+    @JsonProperty("reporter_id")
     private Long reporterId;
     
+    @JsonProperty("assignee_id")
     private Long assignee;
 }

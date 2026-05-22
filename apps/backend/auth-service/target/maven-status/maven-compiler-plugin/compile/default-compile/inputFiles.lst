@@ -3,4 +3,5 @@ F:\自我文件\AI-Test-Platform\apps\backend\auth-service\src\main\java\com\ait
 F:\自我文件\AI-Test-Platform\apps\backend\auth-service\src\main\java\com\aitest\auth\config\SecurityConfig.java
 F:\自我文件\AI-Test-Platform\apps\backend\auth-service\src\main\java\com\aitest\auth\controller\AuthController.java
 F:\自我文件\AI-Test-Platform\apps\backend\auth-service\src\main\java\com\aitest\auth\mapper\UserMapper.java
+F:\自我文件\AI-Test-Platform\apps\backend\auth-service\src\main\java\com\aitest\auth\service\PasswordGenerator.java
 F:\自我文件\AI-Test-Platform\apps\backend\auth-service\src\main\java\com\aitest\auth\entity\User.java

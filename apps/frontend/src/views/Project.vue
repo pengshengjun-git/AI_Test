@@ -5,13 +5,13 @@
         <div class="page-header">
           <h2 class="page-title">项目管理</h2>
           <el-button 
-            v-if="hasPermission('project:create') || isAdmin()"
             type="primary" 
             @click="showCreateDialog"
           >
             <el-icon><Plus /></el-icon>
             新建项目
           </el-button>
+
         </div>
       </el-col>
     </el-row>
@@ -44,17 +44,20 @@
         <el-table :data="projectList" v-loading="loading" style="width: 100%">
           <el-table-column type="index" label="序号" width="80" index-method="(index) => index + 1" />
           <el-table-column prop="name" label="项目名称" min-width="150" />
+          <el-table-column prop="code" label="项目编码" width="120" />
           <el-table-column prop="status" label="状态" width="100">
             <template #default="{ row }">
               <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
             </template>
           </el-table-column>
+          <el-table-column prop="priority" label="优先级" width="100" />
           <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
           <el-table-column prop="testcaseCount" label="用例数" width="100" align="center" />
+          <el-table-column prop="requirementCount" label="需求数" width="100" align="center" />
           <el-table-column prop="defectCount" label="缺陷数" width="100" align="center" />
-          <el-table-column label="创建人" width="120">
+          <el-table-column label="创建人" width="100">
             <template #default="{ row }">
-              {{ row.ownerName || (row.ownerId ? '用户' + row.ownerId : '-') }}
+              {{ row.ownerName || (row.ownerId ? '用户' + row.ownerId : (row.createdBy ? '用户' + row.createdBy : '-')) }}
             </template>
           </el-table-column>
           <el-table-column label="创建时间" width="180">
@@ -67,21 +70,18 @@
               {{ formatDateTime(row.updateTime || row.updated_at || row.updatedAt) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column label="操作" width="140" fixed="right">
             <template #default="{ row }">
               <el-button 
-                v-if="hasPermission('project:update') || isAdmin()"
                 type="primary" 
                 size="small" 
                 @click="handleEdit(row)"
               >编辑</el-button>
               <el-button 
-                v-if="hasPermission('project:delete') || isAdmin()"
                 type="danger" 
                 size="small" 
                 @click="handleDelete(row)"
               >删除</el-button>
-              <span v-if="!hasPermission('project:update') && !hasPermission('project:delete') && !isAdmin()" class="no-permission">无权限</span>
             </template>
           </el-table-column>
         </el-table>
@@ -123,6 +123,14 @@
             <el-option label="已归档" value="ARCHIVED" />
           </el-select>
         </el-form-item>
+        <el-form-item label="优先级" prop="priority">
+          <el-select v-model="projectForm.priority" placeholder="请选择优先级">
+            <el-option label="P0" value="P0" />
+            <el-option label="P1" value="P1" />
+            <el-option label="P2" value="P2" />
+            <el-option label="P3" value="P3" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input
             v-model="projectForm.description"
@@ -150,7 +158,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { getProjectList, createProject, updateProject, deleteProject } from '@/api/project'
 import type { Project, ProjectQueryParams } from '@/api/project'
 import { getPriorityText, getStatusText } from '@/utils/statusMap'
-import { hasPermission, isAdmin } from '@/utils/permission'
+
 
 /**
  * 过滤器表单
@@ -190,13 +198,13 @@ const dialogTitle = computed(() => isEdit.value ? '编辑项目' : '新建项目
 /**
  * 项目表单
  */
-const projectForm = reactive<Project & { ownerId?: number }>({
+const projectForm = reactive<Project & { createdBy?: number }>({
   id: undefined,
   name: '',
-  code: '',
   status: 'PLANNING',
+  priority: 'P2',
   description: '',
-  ownerId: 1
+  createdBy: 1
 })
 
 /**
@@ -255,10 +263,12 @@ const loadProjectList = async () => {
       page: pagination.page,
       size: pagination.size
     })
+    console.log('项目列表API响应:', response)
     if (response.code === 200 || response.code === 0) {
       const data = response.data || response
-      projectList.value = data.records || data.list || data.items || data || []
+      projectList.value = data.list || data.records || data.items || data || []
       pagination.total = data.total || projectList.value.length
+      console.log('解析后的项目列表:', projectList.value)
     }
   } catch (error) {
     console.error('加载项目列表失败:', error)
@@ -350,10 +360,10 @@ const resetForm = () => {
   Object.assign(projectForm, {
     id: null,
     name: '',
-    code: '',
     status: 'PLANNING',
+    priority: 'P2',
     description: '',
-    ownerId: 1
+    createdBy: 1
   })
 }
 
@@ -403,6 +413,8 @@ const handleCurrentChange = (page: number) => {
 onMounted(() => {
   loadProjectList()
 })
+
+
 </script>
 
 <style scoped>
@@ -418,6 +430,8 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .page-title {
@@ -440,5 +454,124 @@ onMounted(() => {
 .no-permission {
   color: #909399;
   font-size: 12px;
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 1200px) {
+  .project-container {
+    padding: 16px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .page-title {
+    font-size: 20px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .project-container {
+    padding: 12px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .page-title {
+    font-size: 18px;
+  }
+  
+  /* 优化表格在移动端的显示 */
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 4px;
+  }
+  
+  /* 隐藏一些非必要的列 */
+  :deep(.el-table .hidden-mobile) {
+    display: none;
+  }
+  
+  /* 优化分页在移动端的显示 */
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .pagination-row {
+    justify-content: center;
+  }
+  
+  /* 优化筛选表单在移动端的显示 */
+  :deep(.el-form--inline .el-form-item) {
+    margin-right: 0;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-form-item__content) {
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-input),
+  :deep(.el-form--inline .el-select) {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .project-container {
+    padding: 8px;
+  }
+  
+  .page-title {
+    font-size: 16px;
+  }
+  
+  /* 进一步优化移动端表格 */
+  :deep(.el-table) {
+    font-size: 11px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 6px 2px;
+  }
+  
+  /* 优化按钮在移动端的显示 */
+  :deep(.el-button) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  /* 优化对话框在移动端的显示 */
+  :deep(.el-dialog) {
+    width: 90% !important;
+    margin: 5vh auto !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .project-container {
+    padding: 6px;
+  }
+  
+  .header-row {
+    margin-bottom: 12px;
+  }
+  
+  .filter-row {
+    margin-bottom: 12px;
+  }
+  
+  .pagination-row {
+    margin-top: 12px;
+  }
 }
 </style>

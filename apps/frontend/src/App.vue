@@ -5,9 +5,20 @@
   <div v-else-if="isLoginPage" class="login-wrapper">
     <router-view />
   </div>
+  <div v-else-if="!hasAnyPermission" class="no-permission-wrapper">
+    <NoPermission />
+  </div>
   <div v-else class="app-container">
+    <!-- 移动端菜单按钮 -->
+    <button class="mobile-menu-btn" @click="toggleMobileMenu" v-if="!isLoginPage">
+      <span>{{ isMobileMenuOpen ? '✕' : '☰' }}</span>
+    </button>
+    
+    <!-- 侧边栏遮罩层 -->
+    <div class="sidebar-overlay" :class="{ 'show': isMobileMenuOpen }" @click="closeMobileMenu"></div>
+    
     <!-- 左侧导航 -->
-    <aside class="sidebar" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
+    <aside class="sidebar" :class="{ 'sidebar-collapsed': isSidebarCollapsed, 'mobile-open': isMobileMenuOpen }">
       <div class="sidebar-header">
         <div class="logo" @click="toggleSidebar">
           <div class="logo-icon">
@@ -19,88 +30,36 @@
         </div>
       </div>
       
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" :key="menuKey">
         <router-link 
-          to="/" 
+          v-for="item in filteredMenuItems" 
+          :key="item.path"
+          :to="item.path" 
           class="nav-item"
-          :class="{ 'active': route.path === '/' }"
+          :class="{ 'active': route.path === item.path }"
           @click="handleNavClick"
         >
-          <span class="nav-icon">🏠</span>
-          <span v-if="!isSidebarCollapsed" class="nav-text">工作台</span>
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span v-if="!isSidebarCollapsed" class="nav-text">{{ item.name }}</span>
         </router-link>
-        <router-link 
-          to="/project" 
-          class="nav-item"
-          :class="{ 'active': route.path === '/project' }"
-          @click="handleNavClick"
-        >
-          <span class="nav-icon">📁</span>
-          <span v-if="!isSidebarCollapsed" class="nav-text">项目管理</span>
-        </router-link>
-        <router-link 
-          to="/requirement" 
-          class="nav-item"
-          :class="{ 'active': route.path === '/requirement' }"
-          @click="handleNavClick"
-        >
-          <span class="nav-icon">📋</span>
-          <span v-if="!isSidebarCollapsed" class="nav-text">需求管理</span>
-        </router-link>
-        <router-link 
-          to="/testcase" 
-          class="nav-item"
-          :class="{ 'active': route.path === '/testcase' }"
-          @click="handleNavClick"
-        >
-          <span class="nav-icon">📝</span>
-          <span v-if="!isSidebarCollapsed" class="nav-text">用例管理</span>
-        </router-link>
-        <router-link 
-          to="/testplan" 
-          class="nav-item"
-          :class="{ 'active': route.path === '/testplan' }"
-          @click="handleNavClick"
-        >
-          <span class="nav-icon">📅</span>
-          <span v-if="!isSidebarCollapsed" class="nav-text">测试计划</span>
-        </router-link>
-        <router-link 
-          to="/defect" 
-          class="nav-item"
-          :class="{ 'active': route.path === '/defect' }"
-          @click="handleNavClick"
-        >
-          <span class="nav-icon">⚠️</span>
-          <span v-if="!isSidebarCollapsed" class="nav-text">缺陷管理</span>
-        </router-link>
-        <router-link 
-          to="/coverage" 
-          class="nav-item"
-          :class="{ 'active': route.path === '/coverage' }"
-          @click="handleNavClick"
-        >
-          <span class="nav-icon">📊</span>
-          <span v-if="!isSidebarCollapsed" class="nav-text">覆盖率</span>
-        </router-link>
-        <router-link 
-          to="/strategy" 
-          class="nav-item"
-          :class="{ 'active': route.path === '/strategy' }"
-          @click="handleNavClick"
-        >
-          <span class="nav-icon">⚙️</span>
-          <span v-if="!isSidebarCollapsed" class="nav-text">策略管理</span>
-        </router-link>
-        <router-link 
-          to="/ai-center" 
-          class="nav-item"
-          :class="{ 'active': route.path === '/ai-center' }"
-          @click="handleNavClick"
-        >
-          <span class="nav-icon">🤖</span>
-          <span v-if="!isSidebarCollapsed" class="nav-text">AI中心</span>
-        </router-link>
+
+        <template v-if="showAdminMenu">
+          <div class="nav-divider" v-if="!isSidebarCollapsed"></div>
+          <div class="nav-group-title" v-if="!isSidebarCollapsed">系统管理</div>
+          <div class="nav-group-title-icon" v-else>⚙️</div>
+
+          <router-link 
+            v-for="item in filteredAdminMenuItems" 
+            :key="item.path"
+            :to="item.path" 
+            class="nav-item"
+            :class="{ 'active': route.path.startsWith(item.path.split('/').slice(0, -1).join('/')) }"
+            @click="handleNavClick"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span v-if="!isSidebarCollapsed" class="nav-text">{{ item.name }}</span>
+          </router-link>
+        </template>
       </nav>
       
       <div class="sidebar-footer">
@@ -136,7 +95,10 @@
               <div class="user-avatar">
                 <span>👤</span>
               </div>
-              <span v-if="!isSidebarCollapsed" class="user-name">管理员</span>
+              <div v-if="!isSidebarCollapsed" class="user-info">
+                <span class="user-name">{{ displayUserName }}</span>
+                <span class="user-role" v-if="displayUserRole">{{ displayUserRole }}</span>
+              </div>
               <span class="expand-icon" :class="{ 'rotate-180': showUserMenu }">▼</span>
             </button>
             <div v-if="showUserMenu" class="user-dropdown">
@@ -185,10 +147,175 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, onMounted, onUnmounted } from 'vue';
+import { computed, ref, reactive, onMounted, onUnmounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { CircleCheck, Warning, InfoFilled } from '@element-plus/icons-vue';
+import { getUserInfo } from '@/utils/permission';
+import { useUserStore } from '@/stores/user';
+import NoPermission from '@/components/NoPermission.vue';
+
+const userStore = useUserStore();
+
+// 菜单权限配置
+interface MenuItem {
+  path: string
+  name: string
+  icon: string
+  permission?: string
+  roles?: string[]
+}
+
+const menuItems: MenuItem[] = [
+  { path: '/', name: '工作台', icon: '🏠', permission: 'dashboard:read' },
+  { path: '/project', name: '项目管理', icon: '📁', permission: 'project:view' },
+  { path: '/requirement', name: '需求管理', icon: '📋', permission: 'requirement:view' },
+  { path: '/testcase', name: '用例管理', icon: '📝', permission: 'testcase:view' },
+  { path: '/testplan', name: '测试计划', icon: '📅', permission: 'testplan:read' },
+  { path: '/defect', name: '缺陷管理', icon: '⚠️', permission: 'defect:view' },
+  { path: '/coverage', name: '覆盖率', icon: '📊', permission: 'coverage:read' },
+  { path: '/strategy', name: '策略管理', icon: '⚙️', permission: 'strategy:read' },
+  { path: '/ai-center', name: 'AI中心', icon: '🤖', permission: 'ai:use' }
+]
+
+const adminMenuItems: MenuItem[] = [
+  { path: '/system/users', name: '用户管理', icon: '👥', permission: 'user:manage' },
+  { path: '/system/roles', name: '角色管理', icon: '🔑', permission: 'role:manage' },
+  { path: '/system/departments', name: '部门管理', icon: '🏢', permission: 'system:department:*' },
+  { path: '/system/menus', name: '菜单管理', icon: '📋', permission: 'system:menu:*' }
+]
+
+// 判断用户是否有权限
+const hasMenuPermission = (item: MenuItem): boolean => {
+  const userInfo = getUserInfo()
+  if (!userInfo) return false
+  
+  const roles = userInfo.roles || []
+  const permissions = userInfo.permissions || []
+  
+  console.log('检查菜单权限 - item:', item.name, 'roles:', roles, 'permissions:', permissions)
+  
+  // 如果是管理员，拥有所有权限
+  if (roles.includes('SUPER_ADMIN') || roles.includes('ADMIN') || permissions.includes('*') || permissions.includes('system:*')) {
+    console.log('管理员用户，允许访问菜单:', item.name)
+    return true
+  }
+  
+  // 检查角色
+  if (item.roles && item.roles.length > 0) {
+    if (item.roles.some(r => roles.includes(r))) {
+      return true
+    }
+  }
+  
+  // 检查权限
+  if (item.permission) {
+    const hasPerm = permissions.some((p: string) => {
+      if (p === item.permission) return true
+      if (p.endsWith('*')) {
+        return item.permission!.startsWith(p.slice(0, -1))
+      }
+      return false
+    })
+    if (hasPerm) return true
+  }
+  
+  // 严格权限控制，必须明确有对应权限才显示
+  return false
+}
+
+// 过滤后的菜单
+const filteredMenuItems = computed(() => {
+  return menuItems.filter(item => hasMenuPermission(item))
+})
+
+const filteredAdminMenuItems = computed(() => {
+  return adminMenuItems.filter(item => hasMenuPermission(item))
+})
+
+// 判断是否为管理员
+const showAdminMenu = computed(() => {
+  return filteredAdminMenuItems.value.length > 0
+});
+
+// 判断是否为超级管理员（直接检查）
+const isAdminUser = computed(() => {
+  try {
+    const userInfo = getUserInfo();
+    if (!userInfo) return false;
+    const roles = userInfo.roles || [];
+    const permissions = userInfo.permissions || [];
+    return roles.includes('SUPER_ADMIN') || permissions.includes('*') || permissions.includes('system:*');
+  } catch (e) {
+    console.error('检查管理员权限失败:', e);
+    return false;
+  }
+});
+
+// 判断用户是否有任何模块权限
+const hasAnyPermission = computed(() => {
+  // 管理员拥有所有权限
+  if (isAdminUser.value) {
+    console.log('管理员用户，直接授予所有权限');
+    return true;
+  }
+  
+  try {
+    const userInfo = getUserInfo();
+    if (!userInfo) {
+      console.warn('未找到用户信息');
+      return false;
+    }
+    
+    const roles = userInfo.roles || [];
+    const permissions = userInfo.permissions || [];
+    
+    console.log('用户权限检查 - roles:', roles, 'permissions:', permissions);
+    
+    // 检查是否有任何模块权限
+    const requiredPermissions = [
+      'dashboard:read',
+      'project:read',
+      'project:view',
+      'requirement:read',
+      'requirement:view',
+      'testcase:read',
+      'testcase:view',
+      'testplan:read',
+      'defect:read',
+      'defect:view',
+      'coverage:read',
+      'strategy:read',
+      'ai:use',
+      'system:user:*',
+      'system:role:*',
+      'system:department:*',
+      'system:menu:*'
+    ];
+    
+    // 检查是否有任何匹配的权限
+    const hasMatch = permissions.some(userPerm => {
+      if (userPerm === '*') return true;
+      return requiredPermissions.some(reqPerm => {
+        if (userPerm === reqPerm) return true;
+        if (userPerm.endsWith('*')) {
+          return reqPerm.startsWith(userPerm.slice(0, -1));
+        }
+        return false;
+      });
+    });
+    
+    console.log('是否有模块权限:', hasMatch);
+    return hasMatch;
+  } catch (e) {
+    console.error('检查模块权限失败:', e);
+    // 严格权限控制，出错时默认无权限
+    return false;
+  }
+});
+
+// 强制刷新菜单的标记
+const menuKey = ref(0)
 
 const route = useRoute();
 const router = useRouter();
@@ -196,10 +323,40 @@ const isLoginPage = computed(() => route.path === '/login');
 const loggedIn = ref(!!localStorage.getItem('token'));
 const isLoggedIn = computed(() => loggedIn.value);
 const isSidebarCollapsed = ref(false);
+const isMobileMenuOpen = ref(false);
 const showUserMenu = ref(false);
 const userMenuRef = ref<HTMLElement | null>(null);
 const showNotification = ref(false);
 const searchQuery = ref('');
+
+// 获取用户名显示 - 直接从localStorage读取，确保初始化时就能正确显示
+const displayUserName = computed(() => {
+  try {
+    const userInfo = getUserInfo();
+    if (!userInfo) return '管理员';
+    return userInfo.realName || userInfo.username || '管理员';
+  } catch (e) {
+    console.error('获取用户名失败:', e);
+    return '管理员';
+  }
+});
+
+// 获取用户角色名称显示 - 直接从localStorage读取，确保初始化时就能正确显示
+const displayUserRole = computed(() => {
+  try {
+    const userInfo = getUserInfo();
+    if (!userInfo) return '';
+    const roles = userInfo.roles || [];
+    if (roles.includes('SUPER_ADMIN')) return '超级管理员';
+    if (roles.includes('PROJECT_MANAGER')) return '项目经理';
+    if (roles.includes('TEST_ENGINEER')) return '测试工程师';
+    if (roles.includes('USER')) return '普通用户';
+    return '用户';
+  } catch (e) {
+    console.error('获取用户角色失败:', e);
+    return '';
+  }
+});
 
 const handleClickOutside = (event: MouseEvent) => {
   if (userMenuRef.value && !userMenuRef.value.contains(event.target as Node)) {
@@ -210,10 +367,21 @@ const handleClickOutside = (event: MouseEvent) => {
 router.afterEach(() => {
   loggedIn.value = !!localStorage.getItem('token');
   showUserMenu.value = false;
+  isMobileMenuOpen.value = false;
+  // 刷新菜单
+  menuKey.value++
 });
 
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
+};
+
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+};
+
+const closeMobileMenu = () => {
+  isMobileMenuOpen.value = false;
 };
 
 const toggleUserMenu = () => {
@@ -221,7 +389,7 @@ const toggleUserMenu = () => {
 };
 
 const handleNavClick = () => {
-  // 点击导航项后的处理
+  isMobileMenuOpen.value = false;
 };
 
 const handleSearch = () => {
@@ -245,14 +413,28 @@ const handleSettings = () => {
 };
 
 const handleLogout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('userInfo');
+  userStore.logout();
   router.push('/login');
   ElMessage.success('退出成功');
 };
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
+  // 初始化时从localStorage恢复用户信息
+  userStore.getUserInfo()
+  // 刷新菜单
+  menuKey.value++
+  
+  // 输出调试信息
+  console.log('=== App.vue 调试信息 ===')
+  console.log('Token:', localStorage.getItem('token'))
+  console.log('UserInfo:', localStorage.getItem('userInfo'))
+  console.log('isLoggedIn:', isLoggedIn.value)
+  console.log('isAdminUser:', isAdminUser.value)
+  console.log('hasAnyPermission:', hasAnyPermission.value)
+  console.log('filteredMenuItems:', filteredMenuItems.value)
+  console.log('========================')
+  
+  document.addEventListener('click', handleClickOutside)
 });
 
 onUnmounted(() => {
@@ -280,7 +462,8 @@ onUnmounted(() => {
 
 <style scoped>
 .login-wrapper,
-.no-auth-wrapper {
+.no-auth-wrapper,
+.no-permission-wrapper {
   min-height: 100vh;
 }
 
@@ -296,7 +479,7 @@ onUnmounted(() => {
   color: #e2e8f0;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, transform 0.3s ease;
   position: fixed;
   left: 0;
   top: 0;
@@ -306,6 +489,38 @@ onUnmounted(() => {
 
 .sidebar.sidebar-collapsed {
   width: 60px;
+}
+
+/* 移动端侧边栏 */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 200;
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 99;
+  backdrop-filter: blur(2px);
 }
 
 .sidebar-header {
@@ -328,6 +543,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .logo-text {
@@ -339,6 +555,7 @@ onUnmounted(() => {
 .sidebar-nav {
   flex: 1;
   padding: 12px;
+  overflow-y: auto;
 }
 
 .nav-item {
@@ -353,6 +570,26 @@ onUnmounted(() => {
   margin-bottom: 4px;
 }
 
+.nav-divider {
+  height: 1px;
+  background: #334155;
+  margin: 12px 0;
+}
+
+.nav-group-title {
+  font-size: 11px;
+  color: #64748b;
+  padding: 8px 16px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nav-group-title-icon {
+  text-align: center;
+  padding: 8px;
+  font-size: 12px;
+}
+
 .nav-item:hover {
   background: rgba(14, 165, 233, 0.1);
   color: #fff;
@@ -365,10 +602,12 @@ onUnmounted(() => {
 
 .nav-icon {
   font-size: 20px;
+  flex-shrink: 0;
 }
 
 .nav-text {
   font-size: 14px;
+  white-space: nowrap;
 }
 
 .sidebar-footer {
@@ -403,6 +642,7 @@ onUnmounted(() => {
   transition: margin-left 0.3s ease;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .sidebar-collapsed + .main-content {
@@ -420,6 +660,7 @@ onUnmounted(() => {
   position: sticky;
   top: 0;
   z-index: 50;
+  gap: 16px;
 }
 
 .search-box {
@@ -430,6 +671,8 @@ onUnmounted(() => {
   padding: 8px 16px;
   border-radius: 8px;
   width: 300px;
+  min-width: 150px;
+  flex-shrink: 1;
 }
 
 .search-icon {
@@ -444,6 +687,7 @@ onUnmounted(() => {
   outline: none;
   font-size: 14px;
   color: #334155;
+  min-width: 0;
 }
 
 .search-box input::placeholder {
@@ -454,6 +698,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-shrink: 0;
 }
 
 .notification-btn {
@@ -465,6 +710,7 @@ onUnmounted(() => {
   padding: 8px;
   border-radius: 8px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .notification-btn:hover {
@@ -517,11 +763,25 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   color: #fff;
+  flex-shrink: 0;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .user-name {
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
+}
+
+.user-role {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
 }
 
 .expand-icon {
@@ -569,6 +829,8 @@ onUnmounted(() => {
   flex: 1;
   padding: 20px;
   background: #f8fafc;
+  overflow-y: auto;
+  min-width: 0;
 }
 
 /* 通知弹窗样式 */
@@ -605,12 +867,14 @@ onUnmounted(() => {
 
 .notification-content {
   flex: 1;
+  min-width: 0;
 }
 
 .notification-title {
   font-size: 14px;
   color: #303133;
   margin-bottom: 4px;
+  word-wrap: break-word;
 }
 
 .notification-time {
@@ -620,5 +884,175 @@ onUnmounted(() => {
 
 .rotate-180 {
   transform: rotate(180deg);
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 1400px) {
+  .search-box {
+    width: 250px;
+  }
+}
+
+@media screen and (max-width: 1200px) {
+  .search-box {
+    width: 200px;
+  }
+  
+  .content-wrapper {
+    padding: 16px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  .sidebar.sidebar-collapsed {
+    transform: translateX(-100%);
+    width: 60px;
+  }
+  
+  .sidebar.mobile-open.sidebar-collapsed {
+    transform: translateX(0);
+  }
+  
+  .mobile-menu-btn {
+    display: flex;
+  }
+  
+  .sidebar-overlay.show {
+    display: block;
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .sidebar-collapsed + .main-content {
+    margin-left: 0;
+  }
+  
+  .top-bar {
+    padding: 12px 16px;
+    padding-left: 64px;
+  }
+  
+  .search-box {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .top-bar {
+    padding: 8px 12px;
+    padding-left: 56px;
+  }
+  
+  .search-box {
+    padding: 6px 12px;
+  }
+  
+  .search-box input {
+    font-size: 13px;
+  }
+  
+  .content-wrapper {
+    padding: 12px;
+  }
+  
+  .user-name {
+    display: none;
+  }
+  
+  .notification-btn {
+    padding: 6px;
+  }
+  
+  /* 优化表格在移动端的显示 */
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 4px;
+  }
+  
+  /* 优化分页在移动端的显示 */
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .top-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .search-box {
+    order: 2;
+    width: 100%;
+  }
+  
+  .top-bar-right {
+    order: 1;
+  }
+  
+  .content-wrapper {
+    padding: 8px;
+  }
+  
+  /* 进一步优化移动端表格 */
+  :deep(.el-table) {
+    font-size: 11px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 6px 2px;
+  }
+  
+  /* 隐藏一些非必要的列 */
+  :deep(.el-table .hidden-mobile) {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .mobile-menu-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    top: 12px;
+    left: 12px;
+  }
+  
+  .top-bar {
+    padding: 8px 12px;
+    padding-left: 52px;
+  }
+}
+
+/* 超小屏幕优化 */
+@media screen and (max-width: 360px) {
+  .search-box {
+    padding: 4px 8px;
+  }
+  
+  .search-icon {
+    font-size: 16px;
+  }
+  
+  .content-wrapper {
+    padding: 6px;
+  }
 }
 </style>

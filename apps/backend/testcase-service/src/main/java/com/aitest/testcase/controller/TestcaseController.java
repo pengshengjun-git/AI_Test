@@ -106,6 +106,15 @@ public class TestcaseController {
     }
 
     /**
+     * 获取用例统计
+     */
+    @GetMapping("/stats")
+    public Result<Map<String, Object>> getStatistics(@RequestParam(required = false) Long projectId) {
+        Map<String, Object> stats = testcaseService.getStatistics(projectId);
+        return Result.success(stats);
+    }
+
+    /**
      * 获取测试用例详情
      */
     @GetMapping("/{id}")

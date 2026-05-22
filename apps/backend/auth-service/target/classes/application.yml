@@ -1,5 +1,5 @@
 server:
-  port: 8001
+  port: 9001
   servlet:
     encoding:
       enabled: true
@@ -20,7 +20,7 @@ spring:
         enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://mysql:3306/ai_test_platform?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/ai_test_platform?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
     password: root
   jackson:
@@ -29,25 +29,11 @@ spring:
       write-dates-as-timestamps: false
     charset: UTF-8
 
-mybatis-plus:
-  mapper-locations: classpath*:/mapper/**/*.xml
-  type-aliases-package: com.aitest.*.entity
-  configuration:
-    map-underscore-to-camel-case: true
-    cache-enabled: false
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  global-config:
-    db-config:
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
-
 management:
   endpoints:
     web:
       exposure:
         include: health,info
-
-jwt:
-  secret: ai-test-platform-secret-key-for-jwt-token-generation-2024
-  expiration: 86400000
+  endpoint:
+    health:
+      show-details: always

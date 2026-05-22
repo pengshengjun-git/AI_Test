@@ -11,6 +11,11 @@ import java.time.LocalDate;
 public class ProjectUpdateDTO {
 
     /**
+     * 项目编码
+     */
+    private String code;
+
+    /**
      * 项目名称
      */
     private String name;
@@ -19,6 +24,16 @@ public class ProjectUpdateDTO {
      * 项目描述
      */
     private String description;
+
+    /**
+     * 项目状态: PLANNING-规划中, IN_PROGRESS-进行中, COMPLETED-已完成, ARCHIVED-已归档
+     */
+    private String status;
+
+    /**
+     * 优先级: P0-P3
+     */
+    private String priority;
 
     /**
      * 项目负责人ID

@@ -6,8 +6,6 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.time.LocalDate;
-
 /**
  * 项目实体类
  */
@@ -17,14 +15,15 @@ import java.time.LocalDate;
 public class Project extends BaseEntity {
 
     /**
+     * 项目编码
+     */
+    @TableField(exist = false)
+    private String code;
+
+    /**
      * 项目名称
      */
     private String name;
-
-    /**
-     * 项目编码
-     */
-    private String code;
 
     /**
      * 项目描述
@@ -32,12 +31,7 @@ public class Project extends BaseEntity {
     private String description;
 
     /**
-     * 项目负责人ID
-     */
-    private Long ownerId;
-
-    /**
-     * 状态: active-活跃, archived-归档
+     * 状态: PLANNING-规划中, IN_PROGRESS-进行中, COMPLETED-已完成, ARCHIVED-已归档
      */
     private String status;
 
@@ -47,19 +41,22 @@ public class Project extends BaseEntity {
     private String priority;
 
     /**
-     * 可见性: private-私有, public-公开
+     * 用例数
      */
-    private String visibility;
+    @TableField(exist = false)
+    private Integer testcaseCount;
 
     /**
-     * 开始日期
+     * 缺陷数
      */
-    private LocalDate startDate;
+    @TableField(exist = false)
+    private Integer defectCount;
 
     /**
-     * 结束日期
+     * 需求数
      */
-    private LocalDate endDate;
+    @TableField(exist = false)
+    private Integer requirementCount;
 
     /**
      * 创建人ID
@@ -70,4 +67,10 @@ public class Project extends BaseEntity {
      * 更新人ID
      */
     private Long updatedBy;
+
+    /**
+     * 创建人用户名（非数据库字段）
+     */
+    @TableField(exist = false)
+    private String ownerName;
 }

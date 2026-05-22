@@ -104,7 +104,10 @@ import { reactive, ref } from 'vue'
 import { TrendCharts, User, Lock, Message, UserFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
-import { login, register } from '@/api/auth'
+import { login, register, getUserInfo as getUserInfoApi } from '@/api/auth'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 /**
  * 登录表单数据
@@ -173,13 +176,18 @@ const handleLogin = async () => {
     const response: any = await login(loginForm)
     
     if (response.code === 200 || response.code === 0) {
-      ElMessage.success('登录成功')
-      const data = response.data || response
-      if (data.token) {
-        localStorage.setItem('token', data.token)
-      }
-      localStorage.setItem('userInfo', JSON.stringify(data))
-      router.push('/')
+        ElMessage.success('登录成功')
+        const data = response.data || response
+        if (data.token) {
+          localStorage.setItem('token', data.token)
+          userStore.setToken(data.token)
+        }
+        
+        // 暂时跳过获取用户信息，直接使用登录返回的数据
+        userStore.setUserInfo(data)
+        localStorage.setItem('userInfo', JSON.stringify(data))
+        
+        router.push('/')
     } else {
       ElMessage.error(response.message || '登录失败')
     }
@@ -258,6 +266,7 @@ const handleResetPassword = async () => {
   align-items: center;
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
 }
 
 .login-box {
@@ -402,5 +411,75 @@ const handleResetPassword = async () => {
 
 .reset-password-form :deep(.el-form-item) {
   margin-bottom: 15px;
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 576px) {
+  .login-container {
+    padding: 16px;
+  }
+  
+  .login-box {
+    width: 100%;
+    max-width: 380px;
+    padding: 30px 24px;
+  }
+  
+  .login-header h1 {
+    font-size: 20px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .login-container {
+    padding: 12px;
+  }
+  
+  .login-box {
+    padding: 24px 20px;
+  }
+  
+  .login-header {
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  .login-header h1 {
+    font-size: 18px;
+  }
+  
+  /* 优化对话框在移动端的显示 */
+  :deep(.el-dialog) {
+    width: 90% !important;
+    margin: 5vh auto !important;
+  }
+}
+
+@media screen and (max-width: 360px) {
+  .login-container {
+    padding: 8px;
+  }
+  
+  .login-box {
+    padding: 20px 16px;
+  }
+  
+  .login-header h1 {
+    font-size: 16px;
+  }
+  
+  .register-link {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .register-link .divider {
+    display: none;
+  }
+  
+  .register-link .link {
+    margin-left: 0;
+  }
 }
 </style>

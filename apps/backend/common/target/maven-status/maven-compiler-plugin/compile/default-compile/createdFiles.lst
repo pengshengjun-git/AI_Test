@@ -1,5 +1,6 @@
 com\aitest\common\exception\BusinessException.class
 com\aitest\common\dto\UserVO.class
+com\aitest\common\interceptor\PermissionInterceptor.class
 com\aitest\common\entity\BaseEntity.class
 com\aitest\common\dto\LoginResponse.class
 com\aitest\common\config\MyMetaObjectHandler.class
@@ -10,6 +11,8 @@ com\aitest\common\result\Result.class
 com\aitest\common\dto\LoginRequest.class
 com\aitest\common\exception\GlobalExceptionHandler.class
 com\aitest\common\util\TokenUtil.class
+com\aitest\common\annotation\RequirePermission.class
 com\aitest\common\util\JwtUtil.class
+com\aitest\common\util\PermissionContext.class
 com\aitest\common\util\Base64Util.class
 com\aitest\common\filter\JwtFilter.class

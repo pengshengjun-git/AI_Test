@@ -3,18 +3,16 @@ package com.aitest.project.controller;
 import com.aitest.common.result.Result;
 import com.aitest.project.dto.ProjectCreateDTO;
 import com.aitest.project.dto.ProjectDetailDTO;
-import com.aitest.project.dto.ProjectMemberDTO;
 import com.aitest.project.dto.ProjectQueryDTO;
 import com.aitest.project.dto.ProjectResponseDTO;
 import com.aitest.project.dto.ProjectStatisticsDTO;
 import com.aitest.project.dto.ProjectUpdateDTO;
 import com.aitest.project.entity.Project;
-import com.aitest.project.entity.ProjectMember;
-import com.aitest.project.service.ProjectMemberService;
 import com.aitest.project.service.ProjectService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,9 +32,6 @@ public class ProjectController {
 
     @Autowired
     private ProjectService projectService;
-
-    @Autowired
-    private ProjectMemberService projectMemberService;
 
     /**
      * 健康检查接口
@@ -86,7 +81,7 @@ public class ProjectController {
      * 创建项目
      */
     @PostMapping
-    public Result<ProjectResponseDTO> createProject(@RequestBody ProjectCreateDTO createDTO) {
+    public Result<ProjectResponseDTO> createProject(@Valid @RequestBody ProjectCreateDTO createDTO) {
         try {
             Project project = projectService.createProject(createDTO);
             return Result.success(ProjectResponseDTO.fromEntity(project));
@@ -199,103 +194,5 @@ public class ProjectController {
     public Result<ProjectStatisticsDTO> getStatistics() {
         ProjectStatisticsDTO statistics = projectService.getStatistics();
         return Result.success(statistics);
-    }
-
-    // ========== 项目成员管理接口 ==========
-
-    /**
-     * 获取项目成员列表
-     */
-    @GetMapping("/{id}/members")
-    public Result<List<ProjectMember>> getProjectMembers(@PathVariable Long id) {
-        List<ProjectMember> members = projectMemberService.getMembersByProjectId(id);
-        return Result.success(members);
-    }
-
-    /**
-     * 添加项目成员
-     */
-    @PostMapping("/{id}/members")
-    public Result<ProjectMember> addMember(@PathVariable Long id, @RequestBody ProjectMemberDTO memberDTO) {
-        try {
-            // 这里暂时使用固定的operatorId，实际应该从当前登录用户获取
-            Long operatorId = 1L;
-            ProjectMember member = projectMemberService.addMember(id, memberDTO, operatorId);
-            return Result.success(member);
-        } catch (Exception e) {
-            LOGGER.error("添加项目成员失败", e);
-            Result<ProjectMember> result = new Result<>();
-            result.setCode(500);
-            result.setMessage(e.getMessage());
-            return result;
-        }
-    }
-
-    /**
-     * 批量添加项目成员
-     */
-    @PostMapping("/{id}/members/batch")
-    public Result<List<ProjectMember>> addMembers(@PathVariable Long id, @RequestBody List<ProjectMemberDTO> memberDTOList) {
-        try {
-            // 这里暂时使用固定的operatorId，实际应该从当前登录用户获取
-            Long operatorId = 1L;
-            List<ProjectMember> members = projectMemberService.addMembers(id, memberDTOList, operatorId);
-            return Result.success(members);
-        } catch (Exception e) {
-            LOGGER.error("批量添加项目成员失败", e);
-            Result<List<ProjectMember>> result = new Result<>();
-            result.setCode(500);
-            result.setMessage(e.getMessage());
-            return result;
-        }
-    }
-
-    /**
-     * 更新项目成员角色
-     */
-    @PutMapping("/{id}/members/{userId}/role")
-    public Result<ProjectMember> updateMemberRole(@PathVariable Long id, @PathVariable Long userId, @RequestParam String role) {
-        try {
-            ProjectMember member = projectMemberService.updateMemberRole(id, userId, role);
-            return Result.success(member);
-        } catch (Exception e) {
-            LOGGER.error("更新项目成员角色失败", e);
-            Result<ProjectMember> result = new Result<>();
-            result.setCode(500);
-            result.setMessage(e.getMessage());
-            return result;
-        }
-    }
-
-    /**
-     * 移除项目成员
-     */
-    @DeleteMapping("/{id}/members/{userId}")
-    public Result<Void> removeMember(@PathVariable Long id, @PathVariable Long userId) {
-        try {
-            boolean result = projectMemberService.removeMember(id, userId);
-            if (result) {
-                return Result.success();
-            } else {
-                return Result.fail("移除失败");
-            }
-        } catch (Exception e) {
-            LOGGER.error("移除项目成员失败", e);
-            return Result.fail(e.getMessage());
-        }
-    }
-
-    /**
-     * 检查用户是否为项目成员
-     */
-    @GetMapping("/{id}/members/{userId}/check")
-    public Result<Map<String, Object>> checkMember(@PathVariable Long id, @PathVariable Long userId) {
-        boolean isMember = projectMemberService.isMember(id, userId);
-        String role = projectMemberService.getUserRole(id, userId);
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("isMember", isMember);
-        result.put("role", role);
-        return Result.success(result);
     }
 }

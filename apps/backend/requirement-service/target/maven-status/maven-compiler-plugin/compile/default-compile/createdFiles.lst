@@ -11,5 +11,6 @@ com\aitest\requirement\service\impl\RequirementServiceImpl.class
 com\aitest\requirement\service\FileStorageService.class
 com\aitest\requirement\dto\RequirementCreateDTO.class
 com\aitest\requirement\service\impl\LocalFileStorageServiceImpl.class
+com\aitest\requirement\config\RestTemplateConfig.class
 com\aitest\requirement\dto\RequirementUpdateDTO.class
 com\aitest\requirement\entity\Requirement.class

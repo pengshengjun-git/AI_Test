@@ -410,8 +410,8 @@ const handleSubmit = async () => {
       submitLoading.value = true
       try {
         let response
-        if (isEdit.value) {
-          response = await updateStrategy(strategyForm.id!, strategyForm)
+        if (isEdit.value && strategyForm.id) {
+          response = await updateStrategy(strategyForm.id, strategyForm)
         } else {
           response = await createStrategy(strategyForm)
         }
@@ -420,11 +420,12 @@ const handleSubmit = async () => {
           ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
           dialogVisible.value = false
           loadStrategyList()
+        } else {
+          ElMessage.error(response.message || '操作失败')
         }
-      } catch (error) {
-        ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
-        dialogVisible.value = false
-        loadStrategyList()
+      } catch (error: any) {
+        console.error('提交失败:', error)
+        ElMessage.error(error.message || '提交失败')
       } finally {
         submitLoading.value = false
       }
@@ -505,6 +506,8 @@ onMounted(() => {
 <style scoped>
 .strategy-container {
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .header-row {
@@ -515,6 +518,8 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .page-title {
@@ -532,5 +537,124 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+/* 确保表格宽度正确 */
+:deep(.el-table) {
+  width: 100% !important;
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 1200px) {
+  .strategy-container {
+    padding: 16px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .page-title {
+    font-size: 20px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .strategy-container {
+    padding: 12px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .page-title {
+    font-size: 18px;
+  }
+  
+  /* 优化表格在移动端的显示 */
+  :deep(.el-table) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 8px 4px;
+  }
+  
+  /* 优化分页在移动端的显示 */
+  :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .pagination-row {
+    justify-content: center;
+  }
+  
+  /* 优化筛选表单在移动端的显示 */
+  :deep(.el-form--inline .el-form-item) {
+    margin-right: 0;
+    margin-bottom: 12px;
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-form-item__content) {
+    width: 100%;
+  }
+  
+  :deep(.el-form--inline .el-input),
+  :deep(.el-form--inline .el-select) {
+    width: 100%;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  .strategy-container {
+    padding: 8px;
+  }
+  
+  .page-title {
+    font-size: 16px;
+  }
+  
+  /* 进一步优化移动端表格 */
+  :deep(.el-table) {
+    font-size: 11px;
+  }
+  
+  :deep(.el-table th),
+  :deep(.el-table td) {
+    padding: 6px 2px;
+  }
+  
+  /* 优化按钮在移动端的显示 */
+  :deep(.el-button) {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  /* 优化对话框在移动端的显示 */
+  :deep(.el-dialog) {
+    width: 90% !important;
+    margin: 5vh auto !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .strategy-container {
+    padding: 6px;
+  }
+  
+  .header-row {
+    margin-bottom: 12px;
+  }
+  
+  .filter-row {
+    margin-bottom: 12px;
+  }
+  
+  .pagination-row {
+    margin-top: 12px;
+  }
 }
 </style>

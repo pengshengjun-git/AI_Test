@@ -1,1 +1,0 @@
-{"projectId":1,"title":"回归测试-缺陷创建验证","description":"测试缺陷创建功能是否正常工作","severity":"P2","priority":"P2","status":"open","reporterId":1,"steps":"1. 打开缺陷管理 2. 点击新建按钮 3. 填写表单 4. 保存"}
