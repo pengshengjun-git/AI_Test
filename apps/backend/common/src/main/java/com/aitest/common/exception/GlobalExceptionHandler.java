@@ -51,4 +51,11 @@ public class GlobalExceptionHandler {
         logger.error("系统异常: ", e);
         return ResponseEntity.ok(Result.error(500, "系统内部错误，请稍后重试"));
     }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Result<Void>> handleHttpRequestMethodNotSupportedException(
+            org.springframework.web.HttpRequestMethodNotSupportedException e) {
+        logger.warn("请求方法不支持: {} - {}", e.getMethod(), e.getMessage());
+        return ResponseEntity.ok(Result.error(405, "请求方法不支持: " + e.getMethod()));
+    }
 }

@@ -25,12 +25,18 @@ public class Requirement extends BaseEntity {
     private String title;
 
     /**
+     * 需求标题（兼容前端name字段）
+     */
+    @TableField(exist = false)
+    private String name;
+
+    /**
      * 需求描述
      */
     private String description;
 
     /**
-     * 需求类型: functional-功能, performance-性能, security-安全, usability-易用性
+     * 需求类型: functional-功能, non_feature-非功能, bug_fix-Bug修复, tech_debt-技术债务
      */
     private String type;
 
@@ -40,14 +46,69 @@ public class Requirement extends BaseEntity {
     private String priority;
 
     /**
-     * 状态: draft-草稿, reviewing-评审中, approved-已批准, implemented-已实现, closed-已关闭
+     * 状态: draft-草稿, pending-待评审, approved-已批准, in_progress-进行中, completed-已完成, rejected-已拒绝, closed-已关闭
      */
     private String status;
 
     /**
-     * 需求来源: manual-手动, import-导入, jira-Jira, confluence-Confluence
+     * 需求来源: internal-内部需求, customer-客户需求, market-市场调研, tech-技术改进
      */
     private String source;
+
+    /**
+     * 提出人
+     */
+    private String proposer;
+
+    /**
+     * 提出时间
+     */
+    private String proposerTime;
+
+    /**
+     * 生效版本
+     */
+    private String effectiveVersion;
+
+    /**
+     * 验收标准
+     */
+    private String acceptanceCriteria;
+
+    /**
+     * 负责人
+     */
+    private String owner;
+
+    /**
+     * 审核人
+     */
+    private String reviewer;
+
+    /**
+     * 权限范围
+     */
+    private String permissionScope;
+
+    /**
+     * 评审结果
+     */
+    private String reviewResult;
+
+    /**
+     * 评审意见
+     */
+    private String reviewComments;
+
+    /**
+     * 上线时间
+     */
+    private String onlineTime;
+
+    /**
+     * 关闭原因
+     */
+    private String closeReason;
 
     /**
      * 关联文档URL
@@ -74,4 +135,10 @@ public class Requirement extends BaseEntity {
      */
     @TableField(exist = false)
     private String creatorName;
+
+    /**
+     * 项目名称（非数据库字段）
+     */
+    @TableField(exist = false)
+    private String projectName;
 }

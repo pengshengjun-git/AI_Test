@@ -1,6 +1,7 @@
 package com.aitest.project.dto;
 
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.LocalDate;
 
@@ -8,6 +9,7 @@ import java.time.LocalDate;
  * 更新项目请求DTO
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProjectUpdateDTO {
 
     /**

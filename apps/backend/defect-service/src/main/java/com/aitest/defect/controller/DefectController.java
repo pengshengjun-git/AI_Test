@@ -80,8 +80,13 @@ public class DefectController {
      */
     @PostMapping
     public Result<Map<String, Object>> createDefect(@Valid @RequestBody DefectCreateDTO dto) {
-        Defect defect = defectService.createDefect(dto);
-        return Result.success(transformDefect(defect));
+        try {
+            Defect defect = defectService.createDefect(dto);
+            return Result.success(transformDefect(defect));
+        } catch (Exception e) {
+            log.error("创建缺陷失败", e);
+            return Result.error("创建失败，请稍后重试");
+        }
     }
 
     /**
@@ -89,11 +94,16 @@ public class DefectController {
      */
     @PostMapping("/{id}")
     public Result<Map<String, Object>> updateDefectByPost(@PathVariable Long id, @RequestBody DefectCreateDTO dto) {
-        Defect defect = defectService.updateDefect(id, dto);
-        if (defect == null) {
-            return Result.error("缺陷不存在");
+        try {
+            Defect defect = defectService.updateDefect(id, dto);
+            if (defect == null) {
+                return Result.error("缺陷不存在");
+            }
+            return Result.success(transformDefect(defect));
+        } catch (Exception e) {
+            log.error("更新缺陷失败", e);
+            return Result.error("更新失败，请稍后重试");
         }
-        return Result.success(transformDefect(defect));
     }
 
     /**
@@ -101,11 +111,16 @@ public class DefectController {
      */
     @PutMapping("/{id}")
     public Result<Map<String, Object>> updateDefect(@PathVariable Long id, @RequestBody DefectCreateDTO dto) {
-        Defect defect = defectService.updateDefect(id, dto);
-        if (defect == null) {
-            return Result.error("缺陷不存在");
+        try {
+            Defect defect = defectService.updateDefect(id, dto);
+            if (defect == null) {
+                return Result.error("缺陷不存在");
+            }
+            return Result.success(transformDefect(defect));
+        } catch (Exception e) {
+            log.error("更新缺陷失败", e);
+            return Result.error("更新失败，请稍后重试");
         }
-        return Result.success(transformDefect(defect));
     }
 
     /**
@@ -113,8 +128,13 @@ public class DefectController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteDefect(@PathVariable Long id) {
-        boolean success = defectService.deleteDefect(id);
-        return success ? Result.success() : Result.error("删除失败");
+        try {
+            boolean success = defectService.deleteDefect(id);
+            return success ? Result.success() : Result.error("删除失败");
+        } catch (Exception e) {
+            log.error("删除缺陷失败", e);
+            return Result.error("删除失败，请稍后重试");
+        }
     }
 
     /**
@@ -122,8 +142,13 @@ public class DefectController {
      */
     @DeleteMapping("/batch")
     public Result<Void> batchDeleteDefects(@RequestBody List<Long> ids) {
-        boolean success = defectService.batchDeleteDefects(ids);
-        return success ? Result.success() : Result.error("删除失败");
+        try {
+            boolean success = defectService.batchDeleteDefects(ids);
+            return success ? Result.success() : Result.error("删除失败");
+        } catch (Exception e) {
+            log.error("批量删除缺陷失败", e);
+            return Result.error("删除失败，请稍后重试");
+        }
     }
 
     /**

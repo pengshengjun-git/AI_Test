@@ -100,28 +100,82 @@ public class RequirementController {
      * 创建需求
      */
     @PostMapping
-    public Result<Requirement> createRequirement(@Valid @RequestBody RequirementCreateDTO dto) {
-        Requirement requirement = requirementService.createRequirement(dto);
-        return Result.success(requirement);
+    public Result<Requirement> createRequirement(@RequestBody RequirementCreateDTO dto) {
+        // 先处理下划线字段兼容
+        handleUnderscoreFields(dto);
+        // 再进行参数校验
+        validateCreateDTO(dto);
+        
+        log.info("创建需求请求: title={}, projectId={}", dto.getTitle(), dto.getProjectId());
+        
+        try {
+            Requirement requirement = requirementService.createRequirement(dto);
+            log.info("创建需求成功: id={}", requirement.getId());
+            return Result.success(requirement);
+        } catch (IllegalArgumentException e) {
+            log.warn("创建需求参数异常: {}", e.getMessage());
+            return Result.error(e.getMessage());
+        } catch (Exception e) {
+            log.error("创建需求系统异常", e);
+            return Result.error("创建失败，请稍后重试");
+        }
     }
 
     /**
      * 更新需求（POST方式，兼容前端调用）
      */
     @PostMapping("/{id}")
-    public Result<Requirement> updateRequirementByPost(@PathVariable Long id, @Valid @RequestBody RequirementUpdateDTO dto) {
+    public Result<Requirement> updateRequirementByPost(@PathVariable Long id, @RequestBody RequirementUpdateDTO dto) {
+        // 先处理下划线字段兼容
+        handleUnderscoreFields(dto);
         dto.setId(id);
-        Requirement requirement = requirementService.updateRequirement(dto);
-        return Result.success(requirement);
+        // 再校验参数
+        validateUpdateDTO(dto);
+        
+        log.info("更新需求请求(id={}): title={}", id, dto.getTitle());
+        
+        try {
+            Requirement requirement = requirementService.updateRequirement(dto);
+            log.info("更新需求成功: id={}", id);
+            return Result.success(requirement);
+        } catch (IllegalArgumentException e) {
+            log.warn("更新需求参数异常: {}", e.getMessage());
+            return Result.error(400, e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("更新需求业务异常: {}", e.getMessage());
+            return Result.error(404, e.getMessage());
+        } catch (Exception e) {
+            log.error("更新需求系统异常", e);
+            return Result.error("更新失败，请稍后重试");
+        }
     }
 
     /**
      * 更新需求（PUT方式）
      */
     @PutMapping
-    public Result<Requirement> updateRequirement(@Valid @RequestBody RequirementUpdateDTO dto) {
-        Requirement requirement = requirementService.updateRequirement(dto);
-        return Result.success(requirement);
+    public Result<Requirement> updateRequirement(@RequestBody RequirementUpdateDTO dto) {
+        // 先处理下划线字段兼容
+        handleUnderscoreFields(dto);
+        // 再校验参数
+        validateUpdateDTO(dto);
+        
+        log.info("更新需求请求(id={}): title={}", dto.getId(), dto.getTitle());
+        
+        try {
+            Requirement requirement = requirementService.updateRequirement(dto);
+            log.info("更新需求成功: id={}", dto.getId());
+            return Result.success(requirement);
+        } catch (IllegalArgumentException e) {
+            log.warn("更新需求参数异常: {}", e.getMessage());
+            return Result.error(400, e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("更新需求业务异常: {}", e.getMessage());
+            return Result.error(404, e.getMessage());
+        } catch (Exception e) {
+            log.error("更新需求系统异常", e);
+            return Result.error("更新失败，请稍后重试");
+        }
     }
 
     /**
@@ -129,8 +183,13 @@ public class RequirementController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteRequirement(@PathVariable Long id) {
-        boolean success = requirementService.deleteRequirement(id);
-        return success ? Result.success() : Result.error("删除失败");
+        try {
+            boolean success = requirementService.deleteRequirement(id);
+            return success ? Result.success() : Result.error("删除失败");
+        } catch (Exception e) {
+            log.error("删除需求失败", e);
+            return Result.error("删除失败，请稍后重试");
+        }
     }
 
     /**
@@ -138,8 +197,13 @@ public class RequirementController {
      */
     @DeleteMapping("/batch")
     public Result<Void> batchDeleteRequirements(@RequestBody List<Long> ids) {
-        boolean success = requirementService.batchDeleteRequirements(ids);
-        return success ? Result.success() : Result.error("批量删除失败");
+        try {
+            boolean success = requirementService.batchDeleteRequirements(ids);
+            return success ? Result.success() : Result.error("批量删除失败");
+        } catch (Exception e) {
+            log.error("批量删除需求失败", e);
+            return Result.error("删除失败，请稍后重试");
+        }
     }
 
     /**
@@ -220,5 +284,108 @@ public class RequirementController {
         requirement.setDocumentUrl(filename);
         requirementService.updateById(requirement);
         return Result.success(requirement);
+    }
+
+    /**
+     * 处理CreateDTO的下划线字段兼容
+     */
+    private void handleUnderscoreFields(RequirementCreateDTO dto) {
+        // 兼容 project_id
+        if (dto.getProjectId() == null && dto.getProject_id() != null) {
+            dto.setProjectId(dto.getProject_id());
+        }
+        // 兼容 name字段到title
+        if ((dto.getTitle() == null || dto.getTitle().isEmpty()) && dto.getName() != null && !dto.getName().isEmpty()) {
+            dto.setTitle(dto.getName());
+        }
+        // 兼容其他下划线字段
+        if (dto.getProposerTime() == null && dto.getProposer_time() != null) {
+            dto.setProposerTime(dto.getProposer_time());
+        }
+        if (dto.getEffectiveVersion() == null && dto.getEffective_version() != null) {
+            dto.setEffectiveVersion(dto.getEffective_version());
+        }
+        if (dto.getAcceptanceCriteria() == null && dto.getAcceptance_criteria() != null) {
+            dto.setAcceptanceCriteria(dto.getAcceptance_criteria());
+        }
+        if (dto.getPermissionScope() == null && dto.getPermission_scope() != null) {
+            dto.setPermissionScope(dto.getPermission_scope());
+        }
+        if (dto.getReviewResult() == null && dto.getReview_result() != null) {
+            dto.setReviewResult(dto.getReview_result());
+        }
+        if (dto.getReviewComments() == null && dto.getReview_comments() != null) {
+            dto.setReviewComments(dto.getReview_comments());
+        }
+        if (dto.getOnlineTime() == null && dto.getOnline_time() != null) {
+            dto.setOnlineTime(dto.getOnline_time());
+        }
+        if (dto.getCloseReason() == null && dto.getClose_reason() != null) {
+            dto.setCloseReason(dto.getClose_reason());
+        }
+    }
+
+    /**
+     * 处理UpdateDTO的下划线字段兼容
+     */
+    private void handleUnderscoreFields(RequirementUpdateDTO dto) {
+        // 兼容 project_id
+        if (dto.getProjectId() == null && dto.getProject_id() != null) {
+            dto.setProjectId(dto.getProject_id());
+        }
+        // 兼容 name字段到title
+        if ((dto.getTitle() == null || dto.getTitle().isEmpty()) && dto.getName() != null && !dto.getName().isEmpty()) {
+            dto.setTitle(dto.getName());
+        }
+        // 兼容其他下划线字段
+        if (dto.getProposerTime() == null && dto.getProposer_time() != null) {
+            dto.setProposerTime(dto.getProposer_time());
+        }
+        if (dto.getEffectiveVersion() == null && dto.getEffective_version() != null) {
+            dto.setEffectiveVersion(dto.getEffective_version());
+        }
+        if (dto.getAcceptanceCriteria() == null && dto.getAcceptance_criteria() != null) {
+            dto.setAcceptanceCriteria(dto.getAcceptance_criteria());
+        }
+        if (dto.getPermissionScope() == null && dto.getPermission_scope() != null) {
+            dto.setPermissionScope(dto.getPermission_scope());
+        }
+        if (dto.getReviewResult() == null && dto.getReview_result() != null) {
+            dto.setReviewResult(dto.getReview_result());
+        }
+        if (dto.getReviewComments() == null && dto.getReview_comments() != null) {
+            dto.setReviewComments(dto.getReview_comments());
+        }
+        if (dto.getOnlineTime() == null && dto.getOnline_time() != null) {
+            dto.setOnlineTime(dto.getOnline_time());
+        }
+        if (dto.getCloseReason() == null && dto.getClose_reason() != null) {
+            dto.setCloseReason(dto.getClose_reason());
+        }
+    }
+
+    /**
+     * 校验CreateDTO参数
+     */
+    private void validateCreateDTO(RequirementCreateDTO dto) {
+        if (dto.getProjectId() == null) {
+            throw new IllegalArgumentException("项目ID不能为空");
+        }
+        if (dto.getTitle() == null || dto.getTitle().isEmpty()) {
+            throw new IllegalArgumentException("需求标题不能为空");
+        }
+    }
+
+    /**
+     * 校验UpdateDTO参数
+     */
+    private void validateUpdateDTO(RequirementUpdateDTO dto) {
+        if (dto.getId() == null) {
+            throw new IllegalArgumentException("需求ID不能为空");
+        }
+        // title在update时可选，但如果提供了就不能为空
+        if (dto.getTitle() != null && dto.getTitle().isEmpty()) {
+            throw new IllegalArgumentException("需求标题不能为空");
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.aitest.testcase.entity;
 import com.aitest.common.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @TableName("testcase")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Testcase extends BaseEntity {
 
     /**

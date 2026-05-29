@@ -185,12 +185,9 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         testcase.setCreateTime(java.time.LocalDateTime.now());
         testcase.setUpdateTime(java.time.LocalDateTime.now());
         this.save(testcase);
-<<<<<<< HEAD
         
         // 保存后填充关联信息
         fillProjectAndRequirementInfo(testcase);
-=======
->>>>>>> 8939518278445a3b2848b219627e06fc8ad9902f
 
         return testcase;
     }
@@ -198,10 +195,17 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Testcase updateTestcase(TestcaseUpdateDTO dto) {
+        if (dto == null || dto.getId() == null) {
+            log.error("更新失败: DTO或ID为空");
+            throw new RuntimeException("请求参数错误");
+        }
+        
         Testcase testcase = this.getById(dto.getId());
         if (testcase == null) {
+            log.error("用例不存在: id={}", dto.getId());
             return null;
         }
+        
         // 只更新DTO中不为null的字段
         if (dto.getTitle() != null) {
             testcase.setTitle(dto.getTitle());
@@ -239,12 +243,9 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         
         testcase.setUpdateTime(java.time.LocalDateTime.now());
         this.updateById(testcase);
-<<<<<<< HEAD
         
         // 更新后填充关联信息
         fillProjectAndRequirementInfo(testcase);
-=======
->>>>>>> 8939518278445a3b2848b219627e06fc8ad9902f
 
         return testcase;
     }

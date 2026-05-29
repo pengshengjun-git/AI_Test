@@ -157,6 +157,11 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
             throw new RuntimeException("项目名称已存在");
         }
         
+        // 检查项目编码是否已存在（如果有填写）
+        if (createDTO.getCode() != null && !createDTO.getCode().isEmpty() && checkCodeExists(createDTO.getCode(), null)) {
+            throw new RuntimeException("项目编码已存在");
+        }
+        
         Project project = new Project();
         BeanUtils.copyProperties(createDTO, project);
         
@@ -189,10 +194,12 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
     
     /**
      * 生成项目编码
-     * 格式: PROJ + 时间戳后8位
+     * 格式: PROJ + 时间戳后6位 + 4位随机数
      */
     private String generateProjectCode() {
-        return "PROJ" + String.valueOf(System.currentTimeMillis()).substring(4);
+        String timestamp = String.valueOf(System.currentTimeMillis()).substring(6);
+        String random = String.format("%04d", (int)(Math.random() * 10000));
+        return "PROJ" + timestamp + random;
     }
 
     @Override
@@ -200,6 +207,16 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
         Project project = this.getById(projectId);
         if (project == null) {
             throw new RuntimeException("项目不存在");
+        }
+        
+        // 检查项目名称是否已存在（排除当前项目）
+        if (updateDTO.getName() != null && !updateDTO.getName().isEmpty() && checkNameExists(updateDTO.getName(), projectId)) {
+            throw new RuntimeException("项目名称已存在");
+        }
+        
+        // 检查项目编码是否已存在（排除当前项目）
+        if (updateDTO.getCode() != null && !updateDTO.getCode().isEmpty() && checkCodeExists(updateDTO.getCode(), projectId)) {
+            throw new RuntimeException("项目编码已存在");
         }
         
         // 更新时也需要做状态映射

@@ -2,11 +2,13 @@ package com.aitest.project.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * 创建项目请求DTO
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProjectCreateDTO {
 
     /**

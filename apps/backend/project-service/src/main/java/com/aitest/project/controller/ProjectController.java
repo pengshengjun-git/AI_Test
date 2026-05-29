@@ -89,12 +89,14 @@ public class ProjectController {
             LOGGER.error("创建项目失败", e);
             Result<ProjectResponseDTO> result = new Result<>();
             // 业务逻辑错误（如名称重复）返回400，其他错误返回500
-            if (e.getMessage() != null && e.getMessage().contains("项目名称已存在")) {
+            String errorMsg = getErrorMessage(e);
+            if (errorMsg != null && (errorMsg.contains("项目名称已存在") || errorMsg.contains("项目编码已存在"))) {
                 result.setCode(400);
+                result.setMessage(errorMsg);
             } else {
                 result.setCode(500);
+                result.setMessage("创建失败，请稍后重试");
             }
-            result.setMessage(e.getMessage());
             return result;
         }
     }
@@ -110,8 +112,14 @@ public class ProjectController {
         } catch (Exception e) {
             LOGGER.error("更新项目失败", e);
             Result<Project> result = new Result<>();
-            result.setCode(500);
-            result.setMessage(e.getMessage());
+            String errorMsg = getErrorMessage(e);
+            if (errorMsg != null && (errorMsg.contains("项目名称已存在") || errorMsg.contains("项目编码已存在") || errorMsg.contains("项目不存在"))) {
+                result.setCode(400);
+                result.setMessage(errorMsg);
+            } else {
+                result.setCode(500);
+                result.setMessage("更新失败，请稍后重试");
+            }
             return result;
         }
     }
@@ -127,10 +135,37 @@ public class ProjectController {
         } catch (Exception e) {
             LOGGER.error("更新项目失败", e);
             Result<Project> result = new Result<>();
-            result.setCode(500);
-            result.setMessage(e.getMessage());
+            String errorMsg = getErrorMessage(e);
+            if (errorMsg != null && (errorMsg.contains("项目名称已存在") || errorMsg.contains("项目编码已存在") || errorMsg.contains("项目不存在"))) {
+                result.setCode(400);
+                result.setMessage(errorMsg);
+            } else {
+                result.setCode(500);
+                result.setMessage("更新失败，请稍后重试");
+            }
             return result;
         }
+    }
+
+    /**
+     * 获取友好的错误提示信息
+     */
+    private String getErrorMessage(Exception e) {
+        if (e.getMessage() == null) {
+            return null;
+        }
+        String message = e.getMessage();
+        // 只返回业务相关的提示信息，避免返回SQL异常堆栈
+        if (message.contains("项目名称已存在")) {
+            return "项目名称已存在";
+        }
+        if (message.contains("项目编码已存在")) {
+            return "项目编码已存在";
+        }
+        if (message.contains("项目不存在")) {
+            return "项目不存在";
+        }
+        return null;
     }
 
     /**

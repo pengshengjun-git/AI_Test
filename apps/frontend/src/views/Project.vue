@@ -113,7 +113,7 @@
           <el-input v-model="projectForm.name" placeholder="请输入项目名称" />
         </el-form-item>
         <el-form-item label="项目编码">
-          <el-input v-model="projectForm.code" placeholder="选填，不填则自动生成" disabled />
+          <el-input v-model="projectForm.code" placeholder="选填，不填则自动生成" />
         </el-form-item>
         <el-form-item label="项目状态" prop="status">
           <el-select v-model="projectForm.status" placeholder="请选择项目状态">
@@ -201,6 +201,7 @@ const dialogTitle = computed(() => isEdit.value ? '编辑项目' : '新建项目
 const projectForm = reactive<Project & { createdBy?: number }>({
   id: undefined,
   name: '',
+  code: '',
   status: 'PLANNING',
   priority: 'P2',
   description: '',
@@ -342,9 +343,13 @@ const handleSubmit = async () => {
           ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
           dialogVisible.value = false
           loadProjectList()
+        } else {
+          ElMessage.error(response.message || '操作失败')
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('提交失败:', error)
+        const errorMsg = error.response?.data?.message || error.message || '操作失败'
+        ElMessage.error(errorMsg)
       } finally {
         submitLoading.value = false
       }
@@ -360,6 +365,7 @@ const resetForm = () => {
   Object.assign(projectForm, {
     id: null,
     name: '',
+    code: '',
     status: 'PLANNING',
     priority: 'P2',
     description: '',

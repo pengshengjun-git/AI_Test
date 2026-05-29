@@ -67,9 +67,29 @@
               <el-tag :type="getStatusType(row.status)">{{ getRequirementStatusText(row.status) }}</el-tag>
             </template>
           </el-table-column>
+          <el-table-column prop="source" label="需求来源" width="100">
+            <template #default="{ row }">
+              {{ getSourceText(row.source) }}
+            </template>
+          </el-table-column>
           <el-table-column prop="projectName" label="关联项目" min-width="120" show-overflow-tooltip>
             <template #default="{ row }">
               {{ row.projectName || getProjectName(row.projectId || row.project_id) || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="owner" label="负责人" width="90" show-overflow-tooltip>
+            <template #default="{ row }">
+              {{ row.owner || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="proposer" label="提出人" width="90" show-overflow-tooltip>
+            <template #default="{ row }">
+              {{ row.proposer || (row.proposerId ? '用户' + row.proposerId : '-') }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="effective_version" label="生效版本" width="100" show-overflow-tooltip>
+            <template #default="{ row }">
+              {{ row.effective_version || row.effectiveVersion || '-' }}
             </template>
           </el-table-column>
           <el-table-column prop="creatorName" label="创建人" width="90" show-overflow-tooltip>
@@ -215,7 +235,7 @@ import { getRequirementStatusText, getPriorityText } from '@/utils/statusMap'
 import InputWithLimit from '@/components/InputWithLimit.vue'
 import TooltipText from '@/components/TooltipText.vue'
 import { formatDateTime } from '@/utils/format'
-import { getRequirementList, createRequirement, updateRequirement, deleteRequirement } from '@/api/requirement'
+import { getRequirementList, getRequirementDetail, createRequirement, updateRequirement, deleteRequirement } from '@/api/requirement'
 import { getProjectOptions } from '@/api/project'
 
 interface Requirement {
@@ -318,6 +338,16 @@ const getTypeText = (type: string) => {
   return map[type] || type
 }
 
+const getSourceText = (source: string) => {
+  const map: Record<string, string> = {
+    'internal': '内部需求',
+    'customer': '客户需求',
+    'market': '市场调研',
+    'tech': '技术改进'
+  }
+  return map[source] || source || '-'
+}
+
 const getPriorityType = (priority: string) => {
   const map: Record<string, string> = {
     'P0': 'danger',
@@ -389,15 +419,54 @@ const showCreateDialog = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row: Requirement) => {
+const handleEdit = async (row: any) => {
   isEdit.value = true
-  Object.assign(requirementForm, {
-    ...row,
-    name: row.name || row.title,
-    projectId: row.projectId || row.project_id,
-    project_id: row.projectId || row.project_id
-  })
-  dialogVisible.value = true
+  loading.value = true
+  try {
+    // 先调用详情接口获取完整数据
+    const response = await getRequirementDetail(row.id)
+    let detailData
+    if (response.code === 200 || response.code === 0) {
+      detailData = response.data || response
+    } else {
+      // 如果详情接口失败，就用行数据
+      detailData = row
+    }
+    
+    Object.assign(requirementForm, {
+      id: detailData.id || row.id,
+      name: detailData.name || detailData.title || row.name || row.title,
+      title: detailData.title || detailData.name || row.title || row.name,
+      description: detailData.description || row.description || '',
+      type: detailData.type || row.type || 'feature',
+      priority: detailData.priority || row.priority || 'P2',
+      source: detailData.source || row.source || 'internal',
+      proposer: detailData.proposer || row.proposer || '',
+      proposer_time: detailData.proposer_time || detailData.proposerTime || row.proposer_time || row.proposerTime || '',
+      effective_version: detailData.effective_version || detailData.effectiveVersion || row.effective_version || row.effectiveVersion || '',
+      acceptance_criteria: detailData.acceptance_criteria || detailData.acceptanceCriteria || row.acceptance_criteria || row.acceptanceCriteria || '',
+      projectId: detailData.projectId || detailData.project_id || row.projectId || row.project_id,
+      project_id: detailData.projectId || detailData.project_id || row.projectId || row.project_id,
+      owner: detailData.owner || row.owner || '',
+      reviewer: detailData.reviewer || row.reviewer || '',
+      permission_scope: detailData.permission_scope || detailData.permissionScope || row.permission_scope || row.permissionScope || 'public',
+      status: detailData.status || row.status || 'draft',
+      review_result: detailData.review_result || detailData.reviewResult || row.review_result || row.reviewResult || '',
+      review_comments: detailData.review_comments || detailData.reviewComments || row.review_comments || row.reviewComments || '',
+      online_time: detailData.online_time || detailData.onlineTime || row.online_time || row.onlineTime || '',
+      close_reason: detailData.close_reason || detailData.closeReason || row.close_reason || row.closeReason || '',
+      createTime: detailData.createTime || detailData.created_at || row.createTime || row.created_at || '',
+      updateTime: detailData.updateTime || detailData.updated_at || row.updateTime || row.updated_at || '',
+      created_at: detailData.created_at || detailData.createTime || row.created_at || row.createTime || '',
+      updated_at: detailData.updated_at || detailData.updateTime || row.updated_at || row.updateTime || ''
+    })
+    dialogVisible.value = true
+  } catch (error) {
+    console.error('获取详情失败:', error)
+    ElMessage.error('获取需求详情失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 const handleDelete = async (row: Requirement) => {

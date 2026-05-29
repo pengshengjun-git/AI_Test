@@ -63,7 +63,7 @@ public class TestcaseController {
             return Result.success(testcase);
         } catch (Exception e) {
             log.error("创建测试用例失败", e);
-            return Result.error(e.getMessage());
+            return Result.error("创建失败，请稍后重试");
         }
     }
 
@@ -72,9 +72,23 @@ public class TestcaseController {
      */
     @PostMapping("/{id}")
     public Result<Testcase> updateTestcaseByPost(@PathVariable Long id, @Valid @RequestBody TestcaseUpdateDTO dto) {
-        dto.setId(id);
-        Testcase testcase = testcaseService.updateTestcase(dto);
-        return Result.success(testcase);
+        log.info("更新测试用例请求: id={}, dto={}", id, dto);
+        try {
+            if (dto == null) {
+                log.error("请求体为空");
+                return Result.error("请求参数错误");
+            }
+            dto.setId(id);
+            Testcase testcase = testcaseService.updateTestcase(dto);
+            if (testcase == null) {
+                log.error("用例不存在: id={}", id);
+                return Result.error("用例不存在");
+            }
+            return Result.success(testcase);
+        } catch (Exception e) {
+            log.error("更新测试用例失败: id={}, error={}", id, e.getMessage(), e);
+            return Result.error("更新失败，请稍后重试: " + e.getClass().getSimpleName());
+        }
     }
 
     /**
@@ -82,9 +96,23 @@ public class TestcaseController {
      */
     @PutMapping("/{id}")
     public Result<Testcase> updateTestcase(@PathVariable Long id, @Valid @RequestBody TestcaseUpdateDTO dto) {
-        dto.setId(id);
-        Testcase testcase = testcaseService.updateTestcase(dto);
-        return Result.success(testcase);
+        log.info("更新测试用例请求: id={}, dto={}", id, dto);
+        try {
+            if (dto == null) {
+                log.error("请求体为空");
+                return Result.error("请求参数错误");
+            }
+            dto.setId(id);
+            Testcase testcase = testcaseService.updateTestcase(dto);
+            if (testcase == null) {
+                log.error("用例不存在: id={}", id);
+                return Result.error("用例不存在");
+            }
+            return Result.success(testcase);
+        } catch (Exception e) {
+            log.error("更新测试用例失败: id={}, error={}", id, e.getMessage(), e);
+            return Result.error("更新失败，请稍后重试: " + e.getClass().getSimpleName());
+        }
     }
 
     /**
@@ -92,8 +120,13 @@ public class TestcaseController {
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteTestcase(@PathVariable Long id) {
-        boolean success = testcaseService.deleteTestcase(id);
-        return success ? Result.success() : Result.error("删除失败");
+        try {
+            boolean success = testcaseService.deleteTestcase(id);
+            return success ? Result.success() : Result.error("删除失败");
+        } catch (Exception e) {
+            log.error("删除测试用例失败", e);
+            return Result.error("删除失败，请稍后重试");
+        }
     }
 
     /**
