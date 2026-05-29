@@ -36,10 +36,10 @@
           <el-form-item label="状态">
             <el-select v-model="filterForm.status" placeholder="请选择状态" clearable>
               <el-option label="全部" value="" />
-              <el-option label="待评审" value="PENDING_REVIEW" />
-              <el-option label="已通过" value="APPROVED" />
-              <el-option label="执行中" value="EXECUTING" />
-              <el-option label="已完成" value="COMPLETED" />
+              <el-option label="草稿" value="draft" />
+              <el-option label="已评审" value="reviewed" />
+              <el-option label="已批准" value="approved" />
+              <el-option label="已废弃" value="deprecated" />
             </el-select>
           </el-form-item>
           <el-form-item>
@@ -71,15 +71,15 @@
               <el-tag :type="getTestStatusType(row.test_status)">{{ getTestStatusText(row.test_status) }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="test_module" label="测试模块" width="120" show-overflow-tooltip />
+          <el-table-column prop="testModule" label="测试模块" width="120" show-overflow-tooltip />
           <el-table-column label="关联项目" width="120">
             <template #default="{ row }">
-              <span>{{ row.projectName || row.project_name || row.projectId || row.project_id || '-' }}</span>
+              <span>{{ row.projectName || row.project_name || '-' }}</span>
             </template>
           </el-table-column>
           <el-table-column label="关联需求" width="120">
             <template #default="{ row }">
-              <span>{{ row.requirementTitle || row.requirement_name || row.requirementId || row.requirement_id || '-' }}</span>
+              <span>{{ row.requirementTitle || row.requirement_name || '-' }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="100">
@@ -87,7 +87,11 @@
               <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="creator" label="创建人" width="100" />
+          <el-table-column label="创建人" width="100">
+            <template #default="{ row }">
+              <span>{{ row.creatorName || row.creator || row.createdBy || '-' }}</span>
+            </template>
+          </el-table-column>
           <el-table-column label="创建时间" width="180">
             <template #default="{ row }">
               {{ formatDateTime(row.created_at || row.createTime) }}
@@ -143,18 +147,23 @@
         </el-form-item>
         <el-form-item label="用例类型" prop="type">
           <el-select v-model="testcaseForm.type" placeholder="请选择用例类型">
-            <el-option label="功能测试" value="FUNCTIONAL" />
-            <el-option label="接口测试" value="API" />
-            <el-option label="性能测试" value="PERFORMANCE" />
-            <el-option label="安全测试" value="SECURITY" />
-            <el-option label="UI测试" value="UI" />
+            <el-option label="功能测试" value="functional" />
+            <el-option label="接口测试" value="api" />
+            <el-option label="性能测试" value="performance" />
+            <el-option label="安全测试" value="security" />
+            <el-option label="边界测试" value="boundary" />
+            <el-option label="异常测试" value="exception" />
+            <el-option label="兼容性测试" value="compatibility" />
           </el-select>
         </el-form-item>
         <el-form-item label="测试状态" prop="testStatus" required>
           <el-select v-model="testcaseForm.testStatus" placeholder="请选择测试状态">
-            <el-option label="待测试" value="待测试" />
-            <el-option label="测试通过" value="测试通过" />
-            <el-option label="测试失败" value="测试失败" />
+            <el-option label="待测试" value="pending" />
+            <el-option label="执行中" value="running" />
+            <el-option label="通过" value="passed" />
+            <el-option label="失败" value="failed" />
+            <el-option label="阻塞" value="blocked" />
+            <el-option label="跳过" value="skipped" />
           </el-select>
         </el-form-item>
         <el-form-item label="测试模块" prop="testModule">
@@ -246,12 +255,12 @@ const testcaseForm = reactive<Testcase>({
   id: undefined,
   title: '',
   priority: 'P2',
-  type: 'FUNCTIONAL',
+  type: 'functional',
   preconditions: '',
   steps: '',
   expectedResult: '',
-  status: 'PENDING_REVIEW',
-  testStatus: '待测试',
+  status: 'draft',
+  testStatus: 'pending',
   testModule: '',
   requirementId: undefined,
   projectId: 1
@@ -304,10 +313,21 @@ const getPriorityType = (priority: string) => {
 const getTypeText = (type: string) => {
   const map: Record<string, string> = {
     'FUNCTIONAL': '功能测试',
+    'functional': '功能测试',
     'API': '接口测试',
+    'api': '接口测试',
     'PERFORMANCE': '性能测试',
+    'performance': '性能测试',
     'SECURITY': '安全测试',
-    'UI': 'UI测试'
+    'security': '安全测试',
+    'UI': 'UI测试',
+    'ui': 'UI测试',
+    'BOUNDARY': '边界测试',
+    'boundary': '边界测试',
+    'EXCEPTION': '异常测试',
+    'exception': '异常测试',
+    'COMPATIBILITY': '兼容性测试',
+    'compatibility': '兼容性测试'
   }
   return map[type] || type
 }
@@ -361,7 +381,13 @@ const getTestStatusType = (status: string) => {
   const map: Record<string, string> = {
     '待测试': 'info',
     '测试通过': 'success',
-    '测试失败': 'danger'
+    '测试失败': 'danger',
+    'pending': 'info',
+    'running': 'warning',
+    'passed': 'success',
+    'failed': 'danger',
+    'blocked': 'warning',
+    'skipped': 'info'
   }
   return map[status] || 'info'
 }
@@ -409,19 +435,41 @@ const showCreateDialog = async () => {
 const handleEdit = async (row: Testcase) => {
   isEdit.value = true
   const projectId = row.projectId || row.project_id
+  
+  // 确保testStatus是正确的英文值
+  let testStatus = row.testStatus || row.test_status
+  if (testStatus && typeof testStatus === 'string' && !['pending', 'running', 'passed', 'failed', 'blocked', 'skipped'].includes(testStatus)) {
+    // 如果是中文值，映射回英文
+    const statusMap: Record<string, string> = {
+      '待测试': 'pending',
+      '执行中': 'running',
+      '通过': 'passed',
+      '测试通过': 'passed',
+      '失败': 'failed',
+      '测试失败': 'failed',
+      '阻塞': 'blocked',
+      '跳过': 'skipped'
+    }
+    testStatus = statusMap[testStatus] || 'pending'
+  }
+  
   Object.assign(testcaseForm, {
     id: row.id,
     title: row.title,
+    description: row.description,
     priority: row.priority,
     type: row.type,
     preconditions: row.preconditions || '',
     steps: row.steps || '',
     expectedResult: row.expectedResult || '',
+    actualResult: row.actualResult,
     status: row.status,
-    testStatus: row.testStatus || row.test_status || '待测试',
+    testStatus: testStatus || 'pending',
     testModule: row.testModule || row.test_module || '',
     requirementId: row.requirementId || row.requirement_id,
-    projectId: projectId
+    projectId: projectId,
+    createdBy: row.createdBy,
+    updatedBy: row.updatedBy
   })
   // 加载项目对应的需求选项
   if (projectId) {
@@ -431,17 +479,42 @@ const handleEdit = async (row: Testcase) => {
 }
 
 /**
- * 执行用例
+ * 执行用例 - 弹出选择状态对话框
  */
 const handleExecute = async (row: Testcase) => {
   try {
-    const response = await executeTestcase(row.id!)
-    if (response.code === 200 || response.code === 0) {
-      ElMessage.success(`开始执行用例: ${row.title}`)
-      loadTestcaseList()
+    const { value: status } = await ElMessageBox.prompt('请选择测试状态', '执行用例', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      inputPattern: /^(pending|running|passed|failed|blocked|skipped)$/,
+      inputErrorMessage: '请选择有效的测试状态',
+      inputType: 'select',
+      inputOptions: [
+        { value: 'pending', label: '待测试' },
+        { value: 'running', label: '执行中' },
+        { value: 'passed', label: '通过' },
+        { value: 'failed', label: '失败' },
+        { value: 'blocked', label: '阻塞' },
+        { value: 'skipped', label: '跳过' }
+      ],
+      inputValue: row.testStatus || row.test_status || 'pending'
+    })
+    
+    if (status) {
+      // 更新测试状态
+      const response = await updateTestcase(row.id!, {
+        id: row.id,
+        testStatus: status
+      })
+      if (response.code === 200 || response.code === 0) {
+        ElMessage.success(`用例状态已更新为: ${getTestStatusText(status)}`)
+        loadTestcaseList()
+      }
     }
   } catch (error) {
-    console.error('执行用例失败:', error)
+    if (error !== 'cancel') {
+      console.error('执行用例失败:', error)
+    }
   }
 }
 
@@ -529,12 +602,12 @@ const resetForm = () => {
     id: null,
     title: '',
     priority: 'P2',
-    type: 'FUNCTIONAL',
+    type: 'functional',
     preconditions: '',
     steps: '',
     expectedResult: '',
-    status: 'PENDING_REVIEW',
-    testStatus: '待测试',
+    status: 'draft',
+    testStatus: 'pending',
     testModule: '',
     requirementId: undefined,
     projectId: 1

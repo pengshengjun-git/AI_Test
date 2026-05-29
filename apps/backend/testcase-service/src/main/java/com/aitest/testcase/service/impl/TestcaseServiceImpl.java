@@ -16,8 +16,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -41,8 +43,31 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
     @Autowired
     private ObjectMapper objectMapper;
 
+    private final JdbcTemplate jdbcTemplate;
+
     private static final String PROJECT_SERVICE_URL = "http://localhost:9003/api/v1/projects";
     private static final String REQUIREMENT_SERVICE_URL = "http://localhost:9004/api/v1/requirements";
+
+    public TestcaseServiceImpl(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    /**
+     * 获取用户名
+     */
+    private String getUserName(Long userId) {
+        if (userId == null) {
+            return "-";
+        }
+        try {
+            String sql = "SELECT username FROM `user` WHERE id = ? AND deleted = 0";
+            String username = jdbcTemplate.queryForObject(sql, String.class, userId);
+            return username != null ? username : "-";
+        } catch (Exception e) {
+            log.warn("获取用户名失败: userId={}, error={}", userId, e.getMessage());
+            return "-";
+        }
+    }
 
     /**
      * 获取项目名称
@@ -53,11 +78,17 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         }
         try {
             String url = PROJECT_SERVICE_URL + "/" + projectId;
-            String response = restTemplate.getForObject(url, String.class);
-            Map<String, Object> result = objectMapper.readValue(response, new TypeReference<Map<String, Object>>() {});
-            Map<String, Object> data = (Map<String, Object>) result.get("data");
-            if (data != null) {
-                return (String) data.get("name");
+            String response = fetchUrlAsString(url);
+            if (response != null) {
+                Map<String, Object> result = objectMapper.readValue(response, new TypeReference<Map<String, Object>>() {});
+                Map<String, Object> data = (Map<String, Object>) result.get("data");
+                if (data != null) {
+                    Map<String, Object> project = (Map<String, Object>) data.get("project");
+                    if (project != null) {
+                        return (String) project.get("name");
+                    }
+                    return (String) data.get("name");
+                }
             }
         } catch (Exception e) {
             log.warn("获取项目名称失败: {}", e.getMessage());
@@ -74,15 +105,17 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         }
         try {
             String url = REQUIREMENT_SERVICE_URL + "/" + requirementId;
-            String response = restTemplate.getForObject(url, String.class);
-            Map<String, Object> result = objectMapper.readValue(response, new TypeReference<Map<String, Object>>() {});
-            Map<String, Object> data = (Map<String, Object>) result.get("data");
-            if (data != null) {
-                String title = (String) data.get("title");
-                if (title == null) {
-                    title = (String) data.get("name");
+            String response = fetchUrlAsString(url);
+            if (response != null) {
+                Map<String, Object> result = objectMapper.readValue(response, new TypeReference<Map<String, Object>>() {});
+                Map<String, Object> data = (Map<String, Object>) result.get("data");
+                if (data != null) {
+                    String title = (String) data.get("title");
+                    if (title == null) {
+                        title = (String) data.get("name");
+                    }
+                    return title;
                 }
-                return title;
             }
         } catch (Exception e) {
             log.warn("获取需求标题失败: {}", e.getMessage());
@@ -91,7 +124,36 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
     }
 
     /**
-     * 填充测试用例的项目名称和需求标题
+     * 通过HTTP请求获取响应字符串
+     */
+    private String fetchUrlAsString(String urlStr) {
+        try {
+            java.net.URL url = new java.net.URL(urlStr);
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+            
+            int responseCode = conn.getResponseCode();
+            if (responseCode == 200) {
+                java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(conn.getInputStream(), "UTF-8"));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
+                reader.close();
+                return sb.toString();
+            }
+        } catch (Exception e) {
+            log.warn("HTTP请求失败: url={}, error={}", urlStr, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 填充测试用例的项目名称、需求标题和创建人用户名
      */
     private void fillProjectAndRequirementInfo(Testcase testcase) {
         if (testcase == null) {
@@ -99,6 +161,7 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         }
         testcase.setProjectName(getProjectName(testcase.getProjectId()));
         testcase.setRequirementTitle(getRequirementTitle(testcase.getRequirementId()));
+        testcase.setCreatorName(getUserName(testcase.getCreatedBy()));
     }
 
     /**
@@ -122,6 +185,9 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         testcase.setCreateTime(java.time.LocalDateTime.now());
         testcase.setUpdateTime(java.time.LocalDateTime.now());
         this.save(testcase);
+        
+        // 保存后填充关联信息
+        fillProjectAndRequirementInfo(testcase);
 
         return testcase;
     }
@@ -133,9 +199,46 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         if (testcase == null) {
             return null;
         }
-        BeanUtils.copyProperties(dto, testcase);
+        // 只更新DTO中不为null的字段
+        if (dto.getTitle() != null) {
+            testcase.setTitle(dto.getTitle());
+        }
+        if (dto.getDescription() != null) {
+            testcase.setDescription(dto.getDescription());
+        }
+        if (dto.getPriority() != null) {
+            testcase.setPriority(dto.getPriority());
+        }
+        if (dto.getType() != null) {
+            testcase.setType(dto.getType());
+        }
+        if (dto.getStatus() != null) {
+            testcase.setStatus(dto.getStatus());
+        }
+        if (dto.getTestStatus() != null) {
+            testcase.setTestStatus(dto.getTestStatus());
+        }
+        if (dto.getTestModule() != null) {
+            testcase.setTestModule(dto.getTestModule());
+        }
+        if (dto.getSteps() != null) {
+            testcase.setSteps(dto.getSteps());
+        }
+        if (dto.getExpectedResult() != null) {
+            testcase.setExpectedResult(dto.getExpectedResult());
+        }
+        if (dto.getProjectId() != null) {
+            testcase.setProjectId(dto.getProjectId());
+        }
+        if (dto.getRequirementId() != null) {
+            testcase.setRequirementId(dto.getRequirementId());
+        }
+        
         testcase.setUpdateTime(java.time.LocalDateTime.now());
         this.updateById(testcase);
+        
+        // 更新后填充关联信息
+        fillProjectAndRequirementInfo(testcase);
 
         return testcase;
     }
@@ -151,6 +254,9 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         stepWrapper.eq(TestcaseStep::getTestcaseId, id);
         stepWrapper.orderByAsc(TestcaseStep::getStepNumber);
         List<TestcaseStep> steps = testcaseStepMapper.selectList(stepWrapper);
+        
+        // 填充关联信息
+        fillProjectAndRequirementInfo(testcase);
 
         return testcase;
     }

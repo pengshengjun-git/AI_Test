@@ -195,6 +195,12 @@ public class DefectController {
         map.put("updatedAt", defect.getUpdateTime());
         map.put("updated_at", defect.getUpdateTime());
         map.put("updateTime", defect.getUpdateTime());
+        map.put("projectName", defect.getProjectName());
+        map.put("project_name", defect.getProjectName());
+        map.put("requirementName", defect.getRequirementName());
+        map.put("requirement_name", defect.getRequirementName());
+        map.put("handler", defect.getHandler());
+        map.put("reporterName", defect.getReporterName());
         return map;
     }
 }

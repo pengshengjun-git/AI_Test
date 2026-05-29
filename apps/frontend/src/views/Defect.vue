@@ -123,10 +123,10 @@
         </el-form-item>
         <el-form-item label="严重程度" prop="severity">
           <el-select v-model="defectForm.severity" placeholder="请选择严重程度">
-            <el-option label="致命" value="FATAL" />
-            <el-option label="严重" value="SERIOUS" />
-            <el-option label="一般" value="NORMAL" />
-            <el-option label="轻微" value="SLIGHT" />
+            <el-option label="致命" value="critical" />
+            <el-option label="严重" value="high" />
+            <el-option label="一般" value="medium" />
+            <el-option label="轻微" value="low" />
           </el-select>
         </el-form-item>
         <el-form-item label="优先级" prop="priority">
@@ -137,8 +137,26 @@
             <el-option label="P3" value="P3" />
           </el-select>
         </el-form-item>
+        <el-form-item label="缺陷类型" prop="type">
+          <el-select v-model="defectForm.type" placeholder="请选择缺陷类型">
+            <el-option label="Bug" value="bug" />
+            <el-option label="功能" value="functional" />
+            <el-option label="性能" value="performance" />
+            <el-option label="安全" value="security" />
+            <el-option label="兼容性" value="compatibility" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="缺陷模块" prop="module">
           <InputWithLimit v-model="defectForm.module" placeholder="请输入缺陷模块" :maxlength="50" />
+        </el-form-item>
+        <el-form-item label="缺陷状态" prop="status">
+          <el-select v-model="defectForm.status" placeholder="请选择缺陷状态">
+            <el-option label="新建" value="new" />
+            <el-option label="确认中" value="confirming" />
+            <el-option label="修复中" value="fixing" />
+            <el-option label="已修复" value="fixed" />
+            <el-option label="已关闭" value="closed" />
+          </el-select>
         </el-form-item>
         <el-form-item label="关联项目" prop="project_id">
           <el-select v-model="defectForm.project_id" placeholder="请选择关联项目">
@@ -231,14 +249,15 @@ const defectForm = reactive<Defect & {
 }>({
   id: undefined,
   title: '',
-  severity: 'NORMAL',
+  severity: 'normal',
   priority: 'P2',
   module: '',
   steps: '',
   stepsToReproduce: '',
   expectedResult: '',
   actualResult: '',
-  status: 'NEW',
+  status: 'new',
+  type: 'bug',
   project_id: undefined,
   projectId: undefined,
   requirement_id: undefined,
@@ -294,7 +313,14 @@ const getSeverityText = (severity: string) => {
     'FATAL': '致命',
     'SERIOUS': '严重',
     'NORMAL': '一般',
-    'SLIGHT': '轻微'
+    'SLIGHT': '轻微',
+    'fatal': '致命',
+    'serious': '严重',
+    'critical': '致命',
+    'high': '严重',
+    'medium': '一般',
+    'low': '轻微',
+    'normal': '一般'
   }
   return map[severity] || severity
 }
@@ -337,7 +363,14 @@ const getStatusText = (status: string) => {
     'CONFIRMING': '确认中',
     'FIXING': '修复中',
     'FIXED': '已修复',
-    'CLOSED': '已关闭'
+    'CLOSED': '已关闭',
+    'new': '新建',
+    'confirming': '确认中',
+    'fixing': '修复中',
+    'fixed': '已修复',
+    'approved': '已批准',
+    'deprecated': '已废弃',
+    'closed': '已关闭'
   }
   return map[status] || status
 }

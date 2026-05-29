@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -25,6 +26,53 @@ import java.util.Map;
 @Service
 public class DefectServiceImpl extends ServiceImpl<DefectMapper, Defect> implements DefectService {
 
+    private final JdbcTemplate jdbcTemplate;
+
+    public DefectServiceImpl(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    private void fillDefectInfo(Defect defect) {
+        if (defect == null) return;
+        defect.setProjectName(getProjectName(defect.getProjectId()));
+        defect.setRequirementName(getRequirementTitle(defect.getRequirementId()));
+        defect.setHandler(getUserName(defect.getAssignee()));
+        defect.setReporterName(getUserName(defect.getReporterId()));
+    }
+
+    private String getProjectName(Long projectId) {
+        if (projectId == null) return null;
+        try {
+            String sql = "SELECT name FROM project WHERE id = ? AND deleted = 0";
+            return jdbcTemplate.queryForObject(sql, String.class, projectId);
+        } catch (Exception e) {
+            log.warn("获取项目名称失败: projectId={}", projectId);
+            return null;
+        }
+    }
+
+    private String getRequirementTitle(Long requirementId) {
+        if (requirementId == null) return null;
+        try {
+            String sql = "SELECT title FROM requirement WHERE id = ? AND deleted = 0";
+            return jdbcTemplate.queryForObject(sql, String.class, requirementId);
+        } catch (Exception e) {
+            log.warn("获取需求标题失败: requirementId={}", requirementId);
+            return null;
+        }
+    }
+
+    private String getUserName(Long userId) {
+        if (userId == null) return null;
+        try {
+            String sql = "SELECT username FROM `user` WHERE id = ? AND deleted = 0";
+            return jdbcTemplate.queryForObject(sql, String.class, userId);
+        } catch (Exception e) {
+            log.warn("获取用户名失败: userId={}", userId);
+            return null;
+        }
+    }
+
     @Override
     public Defect createDefect(DefectCreateDTO dto) {
         Defect defect = new Defect();
@@ -34,6 +82,7 @@ public class DefectServiceImpl extends ServiceImpl<DefectMapper, Defect> impleme
         }
         defect.setCreatedBy(1L);
         this.save(defect);
+        fillDefectInfo(defect);
         return defect;
     }
 
@@ -56,6 +105,7 @@ public class DefectServiceImpl extends ServiceImpl<DefectMapper, Defect> impleme
         if (dto.getAssignee() != null) defect.setAssignee(dto.getAssignee());
         defect.setUpdatedBy(1L);
         this.updateById(defect);
+        fillDefectInfo(defect);
         return defect;
     }
 
@@ -71,7 +121,9 @@ public class DefectServiceImpl extends ServiceImpl<DefectMapper, Defect> impleme
 
     @Override
     public Defect getDefectById(Long id) {
-        return this.getById(id);
+        Defect defect = this.getById(id);
+        fillDefectInfo(defect);
+        return defect;
     }
 
     @Override
@@ -97,14 +149,18 @@ public class DefectServiceImpl extends ServiceImpl<DefectMapper, Defect> impleme
             wrapper.eq(Defect::getAssignee, dto.getAssignee());
         }
         wrapper.orderByDesc(Defect::getCreateTime);
-        return this.page(page, wrapper);
+        IPage<Defect> result = this.page(page, wrapper);
+        result.getRecords().forEach(this::fillDefectInfo);
+        return result;
     }
 
     @Override
     public List<Defect> getDefectsByProjectId(Long projectId) {
         LambdaQueryWrapper<Defect> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Defect::getProjectId, projectId);
-        return this.list(wrapper);
+        List<Defect> list = this.list(wrapper);
+        list.forEach(this::fillDefectInfo);
+        return list;
     }
 
     @Override
@@ -113,6 +169,7 @@ public class DefectServiceImpl extends ServiceImpl<DefectMapper, Defect> impleme
         if (defect != null) {
             defect.setAssignee(assignee);
             this.updateById(defect);
+            fillDefectInfo(defect);
         }
         return defect;
     }

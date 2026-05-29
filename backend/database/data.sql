@@ -202,13 +202,13 @@ ON DUPLICATE KEY UPDATE `role_id` = `role_id`;
 -- =====================================================
 -- 10. 项目数据 (与Project实体类对齐)
 -- =====================================================
-INSERT INTO `project` (`id`, `name`, `description`, `status`, `priority`, `created_by`, `updated_by`) VALUES
-(1, '示例项目', '这是一个示例项目，用于演示AI测试平台功能', 'IN_PROGRESS', 'P0', 1, 1),
-(2, '电商平台测试', '电商平台完整测试项目', 'PLANNING', 'P1', 1, 1),
-(3, '用户中心系统', '用户登录注册模块测试', 'IN_PROGRESS', 'P1', 2, 2),
-(4, '支付模块测试', '第三方支付接口测试', 'PLANNING', 'P0', 1, 1),
-(5, '数据分析平台', '大数据分析系统测试', 'COMPLETED', 'P2', 2, 2),
-(6, '后台管理系统', '管理后台功能测试', 'IN_PROGRESS', 'P2', 1, 1)
+INSERT INTO `project` (`id`, `code`, `name`, `description`, `status`, `priority`, `created_by`, `updated_by`) VALUES
+(1, 'PRJ-001', '示例项目', '这是一个示例项目，用于演示AI测试平台功能', 'IN_PROGRESS', 'P0', 1, 1),
+(2, 'PRJ-002', '电商平台测试', '电商平台完整测试项目', 'PLANNING', 'P1', 1, 1),
+(3, 'PRJ-003', '用户中心系统', '用户登录注册模块测试', 'IN_PROGRESS', 'P1', 2, 2),
+(4, 'PRJ-004', '支付模块测试', '第三方支付接口测试', 'PLANNING', 'P0', 1, 1),
+(5, 'PRJ-005', '数据分析平台', '大数据分析系统测试', 'COMPLETED', 'P2', 2, 2),
+(6, 'PRJ-006', '后台管理系统', '管理后台功能测试', 'IN_PROGRESS', 'P2', 1, 1)
 ON DUPLICATE KEY UPDATE name=VALUES(name), description=VALUES(description), status=VALUES(status), priority=VALUES(priority);
 
 -- =====================================================

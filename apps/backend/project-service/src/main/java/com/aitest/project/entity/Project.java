@@ -17,7 +17,6 @@ public class Project extends BaseEntity {
     /**
      * 项目编码
      */
-    @TableField(exist = false)
     private String code;
 
     /**

@@ -37,9 +37,8 @@ public class Testcase extends BaseEntity {
     private String description;
 
     /**
-     * 前置条件（非数据库字段）
+     * 前置条件
      */
-    @TableField(exist = false)
     private String preconditions;
 
     /**
@@ -126,4 +125,10 @@ public class Testcase extends BaseEntity {
      */
     @TableField(exist = false)
     private String requirementTitle;
+
+    /**
+     * 创建人用户名（非数据库字段）
+     */
+    @TableField(exist = false)
+    private String creatorName;
 }

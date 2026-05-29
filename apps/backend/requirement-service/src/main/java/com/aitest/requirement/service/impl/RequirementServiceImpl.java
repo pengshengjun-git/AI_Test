@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -24,6 +25,29 @@ import java.util.List;
 @Slf4j
 @Service
 public class RequirementServiceImpl extends ServiceImpl<RequirementMapper, Requirement> implements RequirementService {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    public RequirementServiceImpl(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    /**
+     * 获取用户名
+     */
+    private String getUserName(Long userId) {
+        if (userId == null) {
+            return "-";
+        }
+        try {
+            String sql = "SELECT username FROM user WHERE id = ? AND deleted = 0";
+            String username = jdbcTemplate.queryForObject(sql, String.class, userId);
+            return username != null ? username : "-";
+        } catch (Exception e) {
+            log.warn("获取用户名失败: userId={}, error={}", userId, e.getMessage());
+            return "-";
+        }
+    }
 
     /**
      * 创建需求
@@ -140,7 +164,14 @@ public class RequirementServiceImpl extends ServiceImpl<RequirementMapper, Requi
         
         wrapper.orderByDesc(Requirement::getCreateTime);
         
-        return page(page, wrapper);
+        IPage<Requirement> resultPage = page(page, wrapper);
+        
+        // 填充创建人用户名
+        resultPage.getRecords().forEach(requirement -> {
+            requirement.setCreatorName(getUserName(requirement.getCreatedBy()));
+        });
+        
+        return resultPage;
     }
 
     /**

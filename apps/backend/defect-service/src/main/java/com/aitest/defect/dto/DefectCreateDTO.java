@@ -1,5 +1,6 @@
 package com.aitest.defect.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -8,6 +9,7 @@ import lombok.Data;
  * 创建缺陷DTO
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DefectCreateDTO {
     @NotBlank(message = "标题不能为空")
     private String title;

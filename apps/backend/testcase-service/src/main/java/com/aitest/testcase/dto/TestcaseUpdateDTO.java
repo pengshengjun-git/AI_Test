@@ -17,6 +17,11 @@ public class TestcaseUpdateDTO {
     private Long id;
 
     /**
+     * 项目ID
+     */
+    private Long projectId;
+
+    /**
      * 关联需求ID
      */
     private Long requirementId;

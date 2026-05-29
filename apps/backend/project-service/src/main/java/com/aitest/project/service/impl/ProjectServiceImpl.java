@@ -279,8 +279,14 @@ public class ProjectServiceImpl extends ServiceImpl<ProjectMapper, Project> impl
 
     @Override
     public boolean checkCodeExists(String code, Long excludeId) {
-        // code字段暂时不存在，返回false
-        return false;
+        QueryWrapper<Project> wrapper = new QueryWrapper<>();
+        wrapper.eq("code", code);
+        
+        if (excludeId != null) {
+            wrapper.ne("id", excludeId);
+        }
+        
+        return this.count(wrapper) > 0;
     }
     
     @Override

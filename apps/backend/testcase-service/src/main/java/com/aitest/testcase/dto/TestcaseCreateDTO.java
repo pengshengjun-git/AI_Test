@@ -1,5 +1,6 @@
 package com.aitest.testcase.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;
@@ -9,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
  * 测试用例创建DTO
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TestcaseCreateDTO {
 
     /**

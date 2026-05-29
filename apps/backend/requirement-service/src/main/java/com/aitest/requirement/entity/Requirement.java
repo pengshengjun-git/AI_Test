@@ -68,4 +68,10 @@ public class Requirement extends BaseEntity {
      * 更新人ID
      */
     private Long updatedBy;
+
+    /**
+     * 创建人用户名（非数据库字段）
+     */
+    @TableField(exist = false)
+    private String creatorName;
 }

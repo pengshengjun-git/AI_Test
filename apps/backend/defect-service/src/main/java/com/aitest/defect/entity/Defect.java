@@ -44,4 +44,16 @@ public class Defect extends BaseEntity {
     private Long createdBy;
 
     private Long updatedBy;
+
+    @TableField(exist = false)
+    private String projectName;
+
+    @TableField(exist = false)
+    private String requirementName;
+
+    @TableField(exist = false)
+    private String handler;
+
+    @TableField(exist = false)
+    private String reporterName;
 }

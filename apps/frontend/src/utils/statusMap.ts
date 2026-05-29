@@ -26,7 +26,10 @@ export const statusMap: Record<string, string> = {
   FAIL: '失败',
   '待测试': '待测试',
   '测试通过': '测试通过',
-  '测试失败': '测试失败'
+  '测试失败': '测试失败',
+  reviewed: '已评审',
+  approved: '已批准',
+  deprecated: '已废弃'
 }
 
 export const priorityMap: Record<string, string> = {
@@ -43,7 +46,13 @@ export const priorityMap: Record<string, string> = {
 export const testStatusMap: Record<string, string> = {
   '待测试': '待测试',
   '测试通过': '测试通过',
-  '测试失败': '测试失败'
+  '测试失败': '测试失败',
+  pending: '待测试',
+  running: '执行中',
+  passed: '通过',
+  failed: '失败',
+  blocked: '阻塞',
+  skipped: '跳过'
 }
 
 export const requirementStatusMap: Record<string, string> = {

@@ -156,6 +156,7 @@ CREATE TABLE IF NOT EXISTS `role_menu` (
 CREATE TABLE IF NOT EXISTS `project` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '项目ID',
     `name` VARCHAR(128) NOT NULL COMMENT '项目名称',
+    `code` VARCHAR(64) NOT NULL COMMENT '项目编码',
     `description` TEXT COMMENT '项目描述',
     `status` VARCHAR(32) NOT NULL DEFAULT 'PLANNING' COMMENT '状态: PLANNING-规划中, IN_PROGRESS-进行中, COMPLETED-已完成, ARCHIVED-已归档',
     `priority` VARCHAR(32) DEFAULT 'P2' COMMENT '优先级: P0-P3',
@@ -165,6 +166,7 @@ CREATE TABLE IF NOT EXISTS `project` (
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     `deleted` TINYINT NOT NULL DEFAULT 0 COMMENT '删除标记',
     PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_project_code` (`code`),
     KEY `idx_status` (`status`),
     KEY `idx_created_by` (`created_by`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='项目表';
@@ -233,6 +235,7 @@ CREATE TABLE IF NOT EXISTS `testcase` (
     `requirement_id` BIGINT COMMENT '关联需求ID',
     `title` VARCHAR(256) NOT NULL COMMENT '用例标题',
     `description` TEXT COMMENT '用例描述',
+    `preconditions` TEXT COMMENT '前置条件',
     `priority` VARCHAR(32) NOT NULL DEFAULT 'P2' COMMENT '优先级: P0, P1, P2, P3',
     `type` VARCHAR(32) NOT NULL DEFAULT 'functional' COMMENT '用例类型: functional-功能, boundary-边界, exception-异常, security-安全, api-接口, performance-性能, compatibility-兼容性',
     `status` VARCHAR(32) NOT NULL DEFAULT 'draft' COMMENT '状态: draft-草稿, reviewed-已评审, approved-已批准, deprecated-已废弃',
