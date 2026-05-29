@@ -158,12 +158,18 @@
         </el-form-item>
         <el-form-item label="测试状态" prop="testStatus" required>
           <el-select v-model="testcaseForm.testStatus" placeholder="请选择测试状态">
+<<<<<<< HEAD
             <el-option label="待测试" value="pending" />
             <el-option label="执行中" value="running" />
             <el-option label="通过" value="passed" />
             <el-option label="失败" value="failed" />
             <el-option label="阻塞" value="blocked" />
             <el-option label="跳过" value="skipped" />
+=======
+            <el-option label="待测试" value="待测试" />
+            <el-option label="测试通过" value="测试通过" />
+            <el-option label="测试失败" value="测试失败" />
+>>>>>>> 8939518278445a3b2848b219627e06fc8ad9902f
           </el-select>
         </el-form-item>
         <el-form-item label="测试模块" prop="testModule">
@@ -255,12 +261,21 @@ const testcaseForm = reactive<Testcase>({
   id: undefined,
   title: '',
   priority: 'P2',
+<<<<<<< HEAD
   type: 'functional',
   preconditions: '',
   steps: '',
   expectedResult: '',
   status: 'draft',
   testStatus: 'pending',
+=======
+  type: 'FUNCTIONAL',
+  preconditions: '',
+  steps: '',
+  expectedResult: '',
+  status: 'PENDING_REVIEW',
+  testStatus: '待测试',
+>>>>>>> 8939518278445a3b2848b219627e06fc8ad9902f
   testModule: '',
   requirementId: undefined,
   projectId: 1
@@ -434,6 +449,7 @@ const showCreateDialog = async () => {
  */
 const handleEdit = async (row: Testcase) => {
   isEdit.value = true
+<<<<<<< HEAD
   const projectId = row.projectId || row.project_id
   
   // 确保testStatus是正确的英文值
@@ -457,11 +473,17 @@ const handleEdit = async (row: Testcase) => {
     id: row.id,
     title: row.title,
     description: row.description,
+=======
+  Object.assign(testcaseForm, {
+    id: row.id,
+    title: row.title,
+>>>>>>> 8939518278445a3b2848b219627e06fc8ad9902f
     priority: row.priority,
     type: row.type,
     preconditions: row.preconditions || '',
     steps: row.steps || '',
     expectedResult: row.expectedResult || '',
+<<<<<<< HEAD
     actualResult: row.actualResult,
     status: row.status,
     testStatus: testStatus || 'pending',
@@ -475,6 +497,14 @@ const handleEdit = async (row: Testcase) => {
   if (projectId) {
     await loadRequirementOptionsByProject(projectId)
   }
+=======
+    status: row.status,
+    testStatus: row.testStatus || row.test_status || '待测试',
+    testModule: row.testModule || row.test_module || '',
+    requirementId: row.requirementId || row.requirement_id,
+    projectId: row.projectId || row.project_id || 1
+  })
+>>>>>>> 8939518278445a3b2848b219627e06fc8ad9902f
   dialogVisible.value = true
 }
 
@@ -602,12 +632,21 @@ const resetForm = () => {
     id: null,
     title: '',
     priority: 'P2',
+<<<<<<< HEAD
     type: 'functional',
     preconditions: '',
     steps: '',
     expectedResult: '',
     status: 'draft',
     testStatus: 'pending',
+=======
+    type: 'FUNCTIONAL',
+    preconditions: '',
+    steps: '',
+    expectedResult: '',
+    status: 'PENDING_REVIEW',
+    testStatus: '待测试',
+>>>>>>> 8939518278445a3b2848b219627e06fc8ad9902f
     testModule: '',
     requirementId: undefined,
     projectId: 1

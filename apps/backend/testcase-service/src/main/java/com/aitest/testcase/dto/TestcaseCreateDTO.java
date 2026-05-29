@@ -1,6 +1,9 @@
 package com.aitest.testcase.dto;
 
+<<<<<<< HEAD
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+=======
+>>>>>>> 8939518278445a3b2848b219627e06fc8ad9902f
 import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;

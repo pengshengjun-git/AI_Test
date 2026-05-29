@@ -185,9 +185,12 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         testcase.setCreateTime(java.time.LocalDateTime.now());
         testcase.setUpdateTime(java.time.LocalDateTime.now());
         this.save(testcase);
+<<<<<<< HEAD
         
         // 保存后填充关联信息
         fillProjectAndRequirementInfo(testcase);
+=======
+>>>>>>> 8939518278445a3b2848b219627e06fc8ad9902f
 
         return testcase;
     }
@@ -236,9 +239,12 @@ public class TestcaseServiceImpl extends ServiceImpl<TestcaseMapper, Testcase> i
         
         testcase.setUpdateTime(java.time.LocalDateTime.now());
         this.updateById(testcase);
+<<<<<<< HEAD
         
         // 更新后填充关联信息
         fillProjectAndRequirementInfo(testcase);
+=======
+>>>>>>> 8939518278445a3b2848b219627e06fc8ad9902f
 
         return testcase;
     }
